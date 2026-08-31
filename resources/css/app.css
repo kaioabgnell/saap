@@ -1,0 +1,29 @@
+@import '@fortawesome/fontawesome-free/css/fontawesome.css';
+@import '@fortawesome/fontawesome-free/css/solid.css';
+@import '@fortawesome/fontawesome-free/css/regular.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Quem pediu menos movimento ao sistema operacional recebe menos movimento.
+   Não é preferência estética: transição e animação disparam enjoo e enxaqueca
+   em parte das pessoas, e o sistema é usado por sessões de 30 a 60 minutos.
+   Zerar em vez de remover mantém os eventos `transitionend` do Alpine — o
+   x-show/x-transition continua funcionando, só que instantâneo. */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* O Alpine só esconde [x-cloak] depois de subir; sem isto o modo apresentação
+   pisca em tela cheia no carregamento da tela do nível. */
+[x-cloak] {
+    display: none !important;
+}

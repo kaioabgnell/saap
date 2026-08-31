@@ -1,0 +1,45 @@
+{
+  "name": "SAAP API v1",
+  "version": "1",
+  "type": "collection",
+  "vars": {
+    "baseUrl": "http://127.0.0.1:8000/api/v1",
+    "token": "",
+    "learnerId": "1",
+    "assessmentId": "1",
+    "itemId": "1"
+  },
+  "requests": [
+    { "name": "Login", "method": "POST", "url": "{{baseUrl}}/auth/login",
+      "body": { "email": "demo@saap.test", "password": "password", "device_name": "iPad da clínica" },
+      "note": "Copie o token da resposta para a variável {{token}}." },
+    { "name": "Perfil", "method": "GET", "url": "{{baseUrl}}/me" },
+
+    { "name": "Aprendizes", "method": "GET", "url": "{{baseUrl}}/learners" },
+    { "name": "Criar aprendiz", "method": "POST", "url": "{{baseUrl}}/learners",
+      "body": { "name": "Kaleo", "birth_date": "2020-03-15", "mother_name": "Maria" } },
+    { "name": "Aprendiz", "method": "GET", "url": "{{baseUrl}}/learners/{{learnerId}}" },
+
+    { "name": "Abrir avaliação", "method": "POST", "url": "{{baseUrl}}/assessments",
+      "body": { "learner_id": "{{learnerId}}", "applied_on": "2026-07-08" } },
+    { "name": "Avaliação", "method": "GET", "url": "{{baseUrl}}/assessments/{{assessmentId}}" },
+    { "name": "Iniciar nível 1", "method": "POST", "url": "{{baseUrl}}/assessments/{{assessmentId}}/levels/1/start" },
+    { "name": "Marcos do nível 1", "method": "GET", "url": "{{baseUrl}}/assessments/{{assessmentId}}/levels/1/items" },
+    { "name": "Gravar resposta", "method": "PUT", "url": "{{baseUrl}}/assessments/{{assessmentId}}/responses/{{itemId}}",
+      "body": { "entries": [{ "position": 1, "text_value": "bola" }, { "position": 2, "text_value": "água" }] },
+      "note": "Idempotente: reenviar o mesmo corpo produz o mesmo estado." },
+    { "name": "Concluir nível 1", "method": "POST", "url": "{{baseUrl}}/assessments/{{assessmentId}}/levels/1/complete" },
+    { "name": "Concluir avaliação", "method": "POST", "url": "{{baseUrl}}/assessments/{{assessmentId}}/complete" },
+    { "name": "Cancelar avaliação", "method": "POST", "url": "{{baseUrl}}/assessments/{{assessmentId}}/cancel",
+      "body": { "reason": "aprendiz desligado da clínica" } },
+    { "name": "Relatório", "method": "GET", "url": "{{baseUrl}}/assessments/{{assessmentId}}/report" },
+
+    { "name": "Catálogo nível 1", "method": "GET", "url": "{{baseUrl}}/catalog/levels/1",
+      "note": "Guarde o ETag e reenvie em If-None-Match para receber 304." }
+  ],
+  "headers": {
+    "Authorization": "Bearer {{token}}",
+    "Accept": "application/json",
+    "Content-Type": "application/json"
+  }
+}
