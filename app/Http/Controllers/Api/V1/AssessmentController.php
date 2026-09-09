@@ -57,7 +57,7 @@ class AssessmentController extends Controller
 
     public function startLevel(Assessment $assessment, int $level): AssessmentResource
     {
-        $this->authorize('update', $assessment);
+        $this->authorize('applyGuided', $assessment);
 
         app(StartLevel::class)->handle($assessment, $level);
 
@@ -95,7 +95,7 @@ class AssessmentController extends Controller
      */
     public function saveResponse(Request $request, Assessment $assessment, int $itemId): JsonResponse
     {
-        $this->authorize('update', $assessment);
+        $this->authorize('applyGuided', $assessment);
 
         $dados = $request->validate([
             'entries' => ['array'],
@@ -140,7 +140,7 @@ class AssessmentController extends Controller
 
     public function completeLevel(Assessment $assessment, int $level): AssessmentResource
     {
-        $this->authorize('update', $assessment);
+        $this->authorize('applyGuided', $assessment);
 
         $nivel = AssessmentLevel::where('assessment_id', $assessment->id)
             ->where('level', $level)

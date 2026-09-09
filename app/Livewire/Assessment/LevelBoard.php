@@ -49,7 +49,9 @@ class LevelBoard extends Component
 
     public function mount(Assessment $assessment, int $level): void
     {
-        $this->authorize('view', $assessment);
+        // 'viewLevelBoard' e não 'view': uma avaliação transcrita do papel
+        // não tem tela de nível, e abri-la aqui seria o começo de apagá-la.
+        $this->authorize('viewLevelBoard', $assessment);
 
         $this->assessmentId = $assessment->id;
         $this->level = $level;

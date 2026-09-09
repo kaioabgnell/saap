@@ -238,6 +238,61 @@ Pendente, e é decisão da clínica, não do código:
 - Exportação de dados a pedido do titular (art. 18) — CSV/JSON por aprendiz
 - Encarregado de dados designado
 
+## Lançamento retroativo (avaliação em papel)
+
+Para aplicações do VB-MAPP feitas em papel, antes do sistema. O psicólogo
+lança a pontuação direto no gráfico de marcos e o laudo sai pelo mesmo
+caminho de sempre.
+
+**Caminho:** página do aprendiz → `Lançar avaliação em papel` → data da
+aplicação e níveis presentes no formulário → gráfico clicável →
+`Concluir e gerar relatório`.
+
+### O que distingue uma transcrição
+
+| | Aplicação na tela | Transcrição de papel |
+| --- | --- | --- |
+| `assessments.entry_mode` | `guided` | `chart` |
+| Como se pontua | exemplares contados pelo motor | pontuação informada na célula |
+| `responses.computed_score` | o que o motor calculou | **nulo** — não houve cálculo |
+| `responses.entries` | um registro por exemplar | nenhum |
+| Selo do laudo | `RELATÓRIO FINAL` | `RELATÓRIO — TRANSCRIÇÃO` |
+
+O modo nasce com a avaliação e **nunca muda**. Uma transcrição não abre na
+tela do nível (403) nem aceita o `PUT` de resposta da API — se abrisse, o
+primeiro toque a gravaria com zero exemplares e zeraria o marco.
+
+### Três coisas para saber ao operar
+
+**A data é a do papel.** É ela que o laudo imprime e é sobre ela que a idade
+do aprendiz é calculada. Uma aplicação de 2024 lançada hoje sai com a idade
+que o aprendiz tinha em 2024.
+
+**Marco em branco vira 0 na conclusão.** No formulário de papel a célula não
+pintada é zero. A conversão acontece só na conclusão, e o número aparece na
+confirmação antes de o psicólogo aceitar.
+
+**Várias transcrições convivem com uma aplicação em andamento.** A regra de
+"uma avaliação aberta por aprendiz" vale só entre as guiadas: arquivar o
+papel de 2023, 2024 e 2025 é caminho normal.
+
+### Conferir uma transcrição no banco
+
+```sql
+SELECT a.id, a.applied_on, a.entry_mode, a.locked_at,
+       COUNT(r.id) AS respostas,
+       SUM(r.computed_score IS NULL) AS sem_calculo,
+       SUM(r.is_overridden) AS sobrescritas
+FROM assessments a
+LEFT JOIN responses r ON r.assessment_id = a.id
+WHERE a.entry_mode = 'chart'
+GROUP BY a.id;
+```
+
+Numa transcrição sadia, `sem_calculo` é igual a `respostas` e `sobrescritas`
+é zero. Uma linha com `sobrescritas > 0` significa que a avaliação passou
+pelo fluxo guiado em algum momento — investigue antes de emitir o laudo.
+
 ## Quando a pontuação parecer errada
 
 **Volte para a F1, não mexa na interface.** O laudo é gerado de

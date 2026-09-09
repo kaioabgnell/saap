@@ -24,12 +24,14 @@ objetivo, pré-requisitos, entregáveis, tarefas e critérios de aceite.
 ## Ordem de execução
 
 ```
-F0 ─┬─> F1 ─┬─> F3 ──> F4 ──> F5 ─┬─> F7 ──> F9
-    │       │           │         │
-    └─> F2 ─┘           └──> F6 ──┘
+F0 ─┬─> F1 ─┬─> F3 ──> F4 ──> F5 ─┬─> F7 ─┬─> F9
+    │       │           │         │       │
+    └─> F2 ─┘           └──> F6 ──┘       └─> F10
                         │
                         └──> F8
 ```
+
+F10 é posterior à v1: não bloqueia nada e nada depende dela.
 
 | Fase | Título | Depende de | Modelo | Estimativa |
 | --- | --- | --- | --- | --- |
@@ -43,6 +45,7 @@ F0 ─┬─> F1 ─┬─> F3 ──> F4 ──> F5 ─┬─> F7 ──> F9
 | [F7](fases/F7-conclusao-e-relatorio.md) | Conclusão e relatório | F5, F6 | **Opus 5** `max` | ~2 semanas · ✅ concluída |
 | [F8](fases/F8-api-rest.md) | API REST | F3 | Sonnet 5 | ~1,5 semana · ✅ concluída |
 | [F9](fases/F9-acabamento-e-validacao.md) | Acabamento e validação | todas | **Opus 5** `xhigh` | ~1,5 semana · ⚠️ código concluído, validação em campo aberta |
+| [F10](fases/F10-lancamento-retroativo.md) | Lançamento retroativo | F7 | **Opus 5** `xhigh` | ~1 semana · ✅ concluída |
 
 **Paralelizações possíveis:** F2 roda junto com F1. F8 roda junto com F5–F7.
 F6 roda junto com F5.
@@ -54,7 +57,7 @@ Vale validar com aprendizes reais antes de investir em F5.
 
 A coluna **Modelo** acima é vinculante, não sugestão. A regra:
 
-- **Opus 5** nas fases que decidem regra de domínio — F1, F3, F4, F7, F9.
+- **Opus 5** nas fases que decidem regra de domínio — F1, F3, F4, F7, F9, F10.
   Erro nelas é silencioso e se propaga para todo laudo emitido.
 - **Sonnet 5** nas fases que aplicam padrões já estabelecidos — F0, F2, F5, F6, F8.
   Entrega o mesmo resultado a 40% do custo quando a spec é detalhada.

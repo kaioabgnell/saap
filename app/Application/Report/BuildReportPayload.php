@@ -64,6 +64,14 @@ final class BuildReportPayload
                 'iniciada_em' => $assessment->started_at?->toIso8601String(),
                 'concluida_em' => now()->toIso8601String(),
                 'instrumento' => $assessment->instrument,
+                // De onde vieram os dados. Entra no payload — e portanto no
+                // content_hash — porque um laudo transcrito de papel não pode
+                // virar "aplicado no sistema" por edição de banco sem que a
+                // verificação de integridade acuse.
+                'modo' => $assessment->entry_mode->reportMode(),
+                'transcrita_em' => $assessment->isChartEntry()
+                    ? $assessment->created_at?->toIso8601String()
+                    : null,
             ],
             'niveis' => $niveis,
             'total' => [
@@ -133,7 +141,12 @@ final class BuildReportPayload
             'tipo' => $item->response_type->value,
             'respondido' => $respondido,
             'score' => $respondido ? (float) $response->score : 0.0,
-            'score_calculado' => $respondido ? (float) $response->computed_score : null,
+            // Nulo quando não houve cálculo: numa transcrição a pontuação
+            // veio pronta do papel. `(float) null` daria 0,0 — e 0,0 aqui
+            // significaria "o sistema calculou zero", que é outra coisa.
+            'score_calculado' => $respondido && $response->computed_score !== null
+                ? (float) $response->computed_score
+                : null,
             'sobrescrito' => (bool) ($response?->is_overridden ?? false),
             'motivo_sobrescrita' => $response?->override_reason,
             'exemplares' => $respondido ? $this->exemplares($item, $response, $rotulos) : [],

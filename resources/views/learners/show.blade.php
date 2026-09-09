@@ -65,14 +65,28 @@
                 <div class="flex items-center justify-between">
                     <h3 class="text-base font-semibold text-ink">Avaliações</h3>
 
-                    @unless ($learner->assessments->contains(fn ($a) => $a->status->isOpen()))
-                        <form method="POST" action="{{ route('avaliacoes.store', $learner) }}">
-                            @csrf
-                            <button type="submit" class="inline-flex min-h-[44px] items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover">
-                                Nova avaliação
-                            </button>
-                        </form>
-                    @endunless
+                    <div class="flex flex-wrap items-center gap-2">
+                        {{-- Sempre disponível, de propósito: transcrever um formulário
+                             de 2024 não é começar uma segunda aplicação, e uma
+                             aplicação em andamento hoje não pode impedir o arquivo.
+                             Ver OpenChartAssessment. --}}
+                        <a href="{{ route('lancamento.create', $learner) }}"
+                           class="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas">
+                            <i class="fa-solid fa-file-pen text-ink-muted" aria-hidden="true"></i>
+                            Lançar avaliação em papel
+                        </a>
+
+                        {{-- Uma aplicação guiada aberta por vez. A condição olha só
+                             as guiadas, como o guarda de OpenAssessment. --}}
+                        @unless ($learner->assessments->contains(fn ($a) => $a->status->isOpen() && ! $a->isChartEntry()))
+                            <form method="POST" action="{{ route('avaliacoes.store', $learner) }}">
+                                @csrf
+                                <button type="submit" class="inline-flex min-h-[44px] items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-hover">
+                                    Nova avaliação
+                                </button>
+                            </form>
+                        @endunless
+                    </div>
                 </div>
 
                 <ul class="mt-4 divide-y divide-line">

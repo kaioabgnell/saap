@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Domain\Assessment\AssessmentStatus;
+use App\Domain\Assessment\EntryMode;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,7 @@ class Assessment extends Model
     use HasFactory;
 
     protected $fillable = [
-        'learner_id', 'user_id', 'instrument', 'status',
+        'learner_id', 'user_id', 'instrument', 'entry_mode', 'status',
         'applied_on', 'started_at', 'completed_at', 'locked_at',
         'cancelled_at', 'cancel_reason', 'observations',
     ];
@@ -25,6 +26,7 @@ class Assessment extends Model
     {
         return [
             'status' => AssessmentStatus::class,
+            'entry_mode' => EntryMode::class,
             'applied_on' => 'date',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
@@ -61,6 +63,12 @@ class Assessment extends Model
     public function isLocked(): bool
     {
         return $this->locked_at !== null;
+    }
+
+    /** Transcrição de papel — pontuada direto no gráfico, não marco a marco. */
+    public function isChartEntry(): bool
+    {
+        return $this->entry_mode === EntryMode::Chart;
     }
 
     /** @return list<int> níveis efetivamente iniciados */

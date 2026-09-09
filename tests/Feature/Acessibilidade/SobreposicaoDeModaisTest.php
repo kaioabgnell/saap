@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Application\Assessment\OpenChartAssessment;
 use App\Application\Assessment\StartLevel;
+use App\Livewire\Assessment\ChartEntry;
 use App\Livewire\Assessment\LevelBoard;
 use App\Livewire\Assessment\PrintForm;
 use App\Models\Assessment;
@@ -34,11 +36,49 @@ beforeEach(function () {
     $psicologo = User::factory()->create();
     $this->actingAs($psicologo);
 
-    $learner = Learner::factory()->for($psicologo)->create();
-    $this->assessment = Assessment::factory()->for($learner)->for($psicologo)->create();
+    $this->psicologo = $psicologo;
+    $this->learner = Learner::factory()->for($psicologo)->create();
+    $this->assessment = Assessment::factory()->for($this->learner)->for($psicologo)->create();
 
     app(StartLevel::class)->handle($this->assessment, 1);
 });
+
+/** Procura modal preso em ancestral que crie bloco de contenção. */
+function modaisPresos(string $html): array
+{
+    $doc = new DOMDocument;
+    libxml_use_internal_errors(true);
+    $doc->loadHTML('<?xml encoding="UTF-8">'.$html);
+    libxml_clear_errors();
+
+    $xpath = new DOMXPath($doc);
+    $sobreposicoes = $xpath->query("//*[contains(@class,'fixed') and contains(@class,'inset-0')]");
+
+    // Silêncio não é aprovação: sem sobreposição para examinar, quem chama
+    // tem de falhar em vez de passar sem ter olhado nada.
+    if ($sobreposicoes->length === 0) {
+        return ['nenhum modal no HTML — o teste não verificou nada'];
+    }
+
+    $presos = [];
+
+    foreach ($sobreposicoes as $modal) {
+        foreach ($xpath->query('ancestor::*', $modal) as $ancestral) {
+            if ($ancestral->nodeName === 'template') {
+                continue 2;   // teleportado: sai do lugar em runtime
+            }
+
+            $classe = $ancestral->getAttribute('class');
+
+            if (preg_match('/\b(backdrop-blur|backdrop-filter|transform|filter-)/', $classe)) {
+                $presos[] = substr($modal->getAttribute('class'), 0, 50)
+                    .'  →  dentro de: '.substr($classe, 0, 50);
+            }
+        }
+    }
+
+    return $presos;
+}
 
 it('teleporta o modal de impressão para fora da barra com backdrop-blur', function () {
     $html = Livewire::test(PrintForm::class, ['assessment' => $this->assessment, 'level' => 1])
@@ -59,38 +99,28 @@ it('não deixa o modal de conclusão preso sob um ancestral com backdrop-filter'
     // HTML, e o teste passaria sem olhar nada. O de conclusão do nível é irmão
     // da barra hoje — este teste é o que impede alguém de movê-lo para dentro
     // dela e reintroduzir o mesmo defeito.
-    $html = Livewire::test(LevelBoard::class, ['assessment' => $this->assessment, 'level' => 1])
-        ->call('confirmarConclusao')
-        ->html();
+    $presos = modaisPresos(
+        Livewire::test(LevelBoard::class, ['assessment' => $this->assessment, 'level' => 1])
+            ->call('confirmarConclusao')
+            ->html()
+    );
 
-    $doc = new DOMDocument;
-    libxml_use_internal_errors(true);
-    $doc->loadHTML('<?xml encoding="UTF-8">'.$html);
-    libxml_clear_errors();
+    expect($presos)->toBeEmpty("modal preso em bloco de contenção:\n".implode("\n", $presos));
+});
 
-    $xpath = new DOMXPath($doc);
-    $sobreposicoes = $xpath->query("//*[contains(@class,'fixed') and contains(@class,'inset-0')]");
+it('não deixa o modal do lançamento preso sob a barra com backdrop-blur', function () {
+    // A tela de lançamento tem DOIS ancestrais com backdrop-blur: o cabeçalho
+    // fixo e a barra de conclusão. O modal nasce ao lado do botão que o abre,
+    // que fica na barra — sem teleporte, ele apareceria espremido no rodapé.
+    $transcricao = app(OpenChartAssessment::class)->handle(
+        $this->learner, $this->psicologo, '2025-03-12', [1],
+    );
 
-    // Silêncio não é aprovação: se não houver sobreposição para examinar, o
-    // teste não verificou nada e tem de falhar.
-    expect($sobreposicoes->length)->toBeGreaterThan(0, 'nenhum modal no HTML — o teste não verificou nada');
-
-    $presos = [];
-
-    foreach ($sobreposicoes as $modal) {
-        foreach ($xpath->query('ancestor::*', $modal) as $ancestral) {
-            if ($ancestral->nodeName === 'template') {
-                continue 2;   // teleportado: sai do lugar em runtime
-            }
-
-            $classe = $ancestral->getAttribute('class');
-
-            if (preg_match('/\b(backdrop-blur|backdrop-filter|transform|filter-)/', $classe)) {
-                $presos[] = substr($modal->getAttribute('class'), 0, 50)
-                    .'  →  dentro de: '.substr($classe, 0, 50);
-            }
-        }
-    }
+    $presos = modaisPresos(
+        Livewire::test(ChartEntry::class, ['assessment' => $transcricao])
+            ->call('confirmarConclusao')
+            ->html()
+    );
 
     expect($presos)->toBeEmpty("modal preso em bloco de contenção:\n".implode("\n", $presos));
 });

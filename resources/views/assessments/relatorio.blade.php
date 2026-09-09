@@ -52,9 +52,15 @@
                         <p class="text-lg font-semibold text-ink">{{ $d['aprendiz']['nome'] }}</p>
                         <p class="text-sm text-ink-muted">{{ $d['aprendiz']['idade_na_aplicacao'] }} na data da aplicação</p>
                     </div>
-                    <span class="rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-ink">
-                        <i class="fa-solid fa-lock" aria-hidden="true"></i> Concluída — somente leitura
-                    </span>
+                    @if (($d['aplicacao']['modo'] ?? 'aplicacao') === 'transcricao')
+                        <span class="rounded-full bg-warning-soft px-3 py-1 text-xs font-semibold text-warning-ink">
+                            <i class="fa-solid fa-file-pen" aria-hidden="true"></i> Transcrição — somente leitura
+                        </span>
+                    @else
+                        <span class="rounded-full bg-success-soft px-3 py-1 text-xs font-semibold text-success-ink">
+                            <i class="fa-solid fa-lock" aria-hidden="true"></i> Concluída — somente leitura
+                        </span>
+                    @endif
                 </div>
 
                 <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-line pt-4 sm:grid-cols-4">
@@ -101,6 +107,18 @@
                         </tr>
                     </tbody>
                 </table>
+
+                {{-- De onde vieram os dados. Um laudo transcrito não pode ser
+                     indistinguível de um aplicado no sistema: a ausência de
+                     exemplares por marco pareceria omissão do aplicador, e não
+                     o que é — detalhe que ficou no formulário de papel. --}}
+                @if (($d['aplicacao']['modo'] ?? 'aplicacao') === 'transcricao')
+                    <p class="mt-4 rounded-md border-l-4 border-warning bg-warning-soft px-4 py-3 text-sm text-warning-ink">
+                        <strong>Resultados transcritos</strong> de aplicação em papel realizada em
+                        {{ \Carbon\Carbon::parse($d['aplicacao']['data'])->format('d/m/Y') }}.
+                        O registro de exemplares por marco permaneceu no formulário original.
+                    </p>
+                @endif
             </div>
 
             {{-- Gráfico por nível --}}

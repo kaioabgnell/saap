@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Application\Assessment;
 
-use App\Domain\Assessment\LevelStatus;
 use App\Domain\Vbmapp\Progress\Progress;
 use App\Domain\Vbmapp\Progress\ProgressCounter;
 use App\Domain\Vbmapp\Scoring\EntryTally;
@@ -32,6 +31,7 @@ final class SaveResponse
         private readonly EntryTally $tally,
         private readonly ScoreCalculator $calculator,
         private readonly ProgressCounter $progress,
+        private readonly RecalculateLevelTotals $totais,
     ) {}
 
     public function handle(SaveResponseCommand $command): SaveResponseResult
@@ -41,6 +41,13 @@ final class SaveResponse
 
             if ($assessment->isLocked()) {
                 throw new RuntimeException('Esta avaliação foi concluída e não pode ser alterada.');
+            }
+
+            // Última barreira do modo. As de cima são a policy e a rota; esta
+            // existe porque é a única que um chamador novo não consegue
+            // esquecer de colocar.
+            if ($assessment->isChartEntry()) {
+                throw new RuntimeException('Esta avaliação foi transcrita de formulário em papel; a pontuação se altera no gráfico de lançamento.');
             }
 
             $item = Item::findOrFail($command->itemId);
@@ -83,7 +90,7 @@ final class SaveResponse
             );
 
             $this->sincronizarEntradas($response, $entradas);
-            $this->recalcularNivel($nivel);
+            $this->totais->handle($nivel);
 
             return new SaveResponseResult(
                 score: $valendo,
@@ -187,33 +194,6 @@ final class SaveResponse
             'created_at' => $agora,
             'updated_at' => $agora,
         ], $entradas));
-    }
-
-    /**
-     * Recalcula os contadores do nível na MESMA transação da gravação.
-     * Nunca por job: o progresso é lido no render seguinte.
-     */
-    private function recalcularNivel(AssessmentLevel $nivel): void
-    {
-        $agregado = Response::query()
-            ->join('vbmapp_items', 'vbmapp_items.id', '=', 'responses.item_id')
-            ->where('responses.assessment_id', $nivel->assessment_id)
-            ->where('vbmapp_items.level', $nivel->level)
-            ->whereNotNull('responses.answered_at')
-            ->selectRaw('COUNT(*) AS respondidos, COALESCE(SUM(responses.score), 0) AS pontos')
-            ->first();
-
-        $respondidos = (int) $agregado->respondidos;
-
-        $nivel->update([
-            'answered_count' => $respondidos,
-            'score_total' => (float) $agregado->pontos,
-            // Um nível concluído volta a "em andamento" se uma resposta for
-            // desfeita. A conclusão da avaliação (F7) é que trava de vez.
-            'status' => $respondidos >= $nivel->total_count
-                ? $nivel->status
-                : LevelStatus::InProgress->value,
-        ]);
     }
 
     private function progressoDaArea(Assessment $assessment, Item $item): Progress

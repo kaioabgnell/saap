@@ -25,6 +25,11 @@
         display: inline-block; background: #ECFDF5; border: 1px solid #059669;
         color: #065F46; font-weight: bold; font-size: 9px; padding: 3px 8px; letter-spacing: 1px;
     }
+    .selo-transcricao {
+        display: inline-block; background: #FFFBEB; border: 1px solid #D97706;
+        color: #92400E; font-weight: bold; font-size: 8px; padding: 3px 6px;
+        letter-spacing: 0.5px; line-height: 1.3; text-align: center;
+    }
 
     .info-linha { font-size: 9px; color: #475569; margin: 1px 0; }
     .info-linha b { color: #0F172A; }
@@ -50,6 +55,12 @@
     .score-0 { color: #94A3B8; }
     .exemplares { color: #475569; font-size: 8.5px; }
     .ajustado { color: #92400E; background: #FFFBEB; font-size: 8px; padding: 1px 4px; }
+
+    .procedencia {
+        margin: 10px 0 0 0; padding: 6px 8px;
+        background: #FFFBEB; border-left: 3px solid #D97706;
+        font-size: 8.5px; color: #92400E;
+    }
 
     .carimbo {
         margin-top: 20px; padding: 8px; background: #F8FAFC;
@@ -78,7 +89,17 @@
                 <div class="info-linha">{{ $d['aplicador']['nome'] }}@if ($d['aplicador']['registro']) · {{ $d['aplicador']['registro'] }}@endif</div>
             </td>
             <td style="width: 20%; text-align: right;">
-                <span class="selo-final">RELATÓRIO FINAL</span>
+                {{-- Um laudo transcrito não pode se apresentar como aplicado
+                     no sistema. Quem lê precisa saber, já no cabeçalho de
+                     todas as páginas, de onde os dados vieram. --}}
+                @if (($d['aplicacao']['modo'] ?? 'aplicacao') === 'transcricao')
+                    {{-- Duas linhas de propósito: a célula do cabeçalho tem 20%
+                         da largura e "RELATÓRIO — TRANSCRIÇÃO" numa linha só
+                         quebrava com o travessão pendurado no fim. --}}
+                    <span class="selo-transcricao">RELATÓRIO<br>TRANSCRIÇÃO</span>
+                @else
+                    <span class="selo-final">RELATÓRIO FINAL</span>
+                @endif
             </td>
         </tr>
     </table>
@@ -107,6 +128,14 @@
         <th class="num">{{ str_replace('.', ',', (string) $d['total']['pontuacao']) }}</th>
     </tr>
 </table>
+
+@if (($d['aplicacao']['modo'] ?? 'aplicacao') === 'transcricao')
+    <p class="procedencia">
+        <b>Resultados transcritos</b> de aplicação em papel realizada em
+        {{ \Carbon\Carbon::parse($d['aplicacao']['data'])->format('d/m/Y') }}.
+        O registro de exemplares por marco permaneceu no formulário original.
+    </p>
+@endif
 
 @foreach ($d['niveis'] as $nivel)
     @php $chart = $payload->chartFor($nivel['nivel']); @endphp

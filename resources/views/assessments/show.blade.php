@@ -41,7 +41,9 @@
             {{-- Conclusão / cancelamento --}}
             <livewire:assessment.complete-assessment-panel :assessment="$assessment" />
 
-            {{-- Níveis --}}
+            {{-- Níveis. Não aparece na transcrição: lá não há tela de nível para
+                 abrir, e o progresso se lê no próprio gráfico de lançamento. --}}
+            @unless ($assessment->isChartEntry())
             <div class="rounded-lg border border-line bg-surface p-6 shadow-sm">
                 <h3 class="text-base font-semibold text-ink">Níveis</h3>
                 <p class="mt-1 text-sm text-ink-muted">
@@ -85,6 +87,7 @@
                     @endforeach
                 </ul>
             </div>
+            @endunless
 
             <div class="text-center">
                 <a href="{{ route('aprendizes.show', $assessment->learner) }}" class="text-sm font-medium text-primary hover:underline">

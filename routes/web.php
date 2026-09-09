@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\ChartEntryController;
 use App\Http\Controllers\LearnerController;
 use App\Http\Controllers\LearnerPhotoController;
 use App\Http\Controllers\PainelController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\PrintFormController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Livewire\Admin\StimulusCuration;
+use App\Livewire\Assessment\ChartEntry;
 use App\Livewire\Assessment\LevelBoard;
 use Illuminate\Support\Facades\Route;
 
@@ -31,11 +33,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/aprendizes/{learner}/avaliacoes', [AssessmentController::class, 'store'])
         ->name('avaliacoes.store');
+
+    // Lançamento retroativo: transcrição de formulário já aplicado em papel.
+    Route::get('/aprendizes/{learner}/lancamento', [ChartEntryController::class, 'create'])
+        ->name('lancamento.create');
+    Route::post('/aprendizes/{learner}/lancamento', [ChartEntryController::class, 'store'])
+        ->name('lancamento.store');
     Route::get('/avaliacoes/{assessment}', [AssessmentController::class, 'show'])
         ->name('avaliacoes.show');
     Route::get('/avaliacoes/{assessment}/nivel/{level}', LevelBoard::class)
         ->whereIn('level', ['1', '2', '3'])
         ->name('avaliacoes.nivel');
+    Route::get('/avaliacoes/{assessment}/lancamento', ChartEntry::class)
+        ->name('avaliacoes.lancamento');
     Route::get('/avaliacoes/{assessment}/formulario/{token}', [PrintFormController::class, 'show'])
         ->name('avaliacoes.formulario');
 

@@ -39,6 +39,35 @@
             <p class="mt-2 text-xs text-ink-subtle">As respostas registradas foram preservadas.</p>
         </div>
 
+    @elseif ($avaliacao->isChartEntry())
+        {{-- Transcrição em andamento. A conclusão não é daqui: ela converte
+             marco em branco em zero e por isso mora na própria tela de
+             lançamento, onde o número aparece antes de o psicólogo confirmar. --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface p-5 shadow-sm">
+            <div>
+                <p class="font-medium text-ink">
+                    <i class="fa-solid fa-file-pen text-ink-muted" aria-hidden="true"></i>
+                    Lançamento em andamento
+                </p>
+                <p class="mt-0.5 text-sm text-ink-muted">
+                    {{ $avaliacao->levels->sum('answered_count') }} marcos marcados ·
+                    <span class="font-medium tabular-nums text-ink">{{ str_replace('.', ',', (string) $this->pontuacaoTotal) }}</span> pontos
+                </p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <button type="button" wire:click="confirmarCancelamento"
+                        class="min-h-[44px] rounded-md px-3 py-2 text-sm font-medium text-ink-muted hover:text-danger">
+                    Cancelar avaliação
+                </button>
+                <a href="{{ route('avaliacoes.lancamento', $avaliacao) }}"
+                   class="inline-flex min-h-[44px] items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover">
+                    <i class="fa-solid fa-table-cells" aria-hidden="true"></i>
+                    Continuar lançamento
+                </a>
+            </div>
+        </div>
+
     @else
         <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line bg-surface p-5 shadow-sm">
             <div>
