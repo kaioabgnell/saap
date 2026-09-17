@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Application\Report\GenerateAiSummary;
 use App\Jobs\GenerateReportPdf;
 use App\Models\Assessment;
 use App\Models\ReportAccessLog;
@@ -21,7 +22,7 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
  */
 class ReportController extends Controller
 {
-    public function show(Assessment $assessment, Request $request): View
+    public function show(Assessment $assessment, Request $request, GenerateAiSummary $resumos): View
     {
         $this->authorize('view', $assessment);
 
@@ -36,6 +37,11 @@ class ReportController extends Controller
             'assessment' => $assessment,
             'snapshot' => $snapshot,
             'payload' => $snapshot->reportPayload(),
+            // Gerado na primeira visita e reaproveitado daí em diante — sem
+            // perguntar, como todo o resto desta tela. `paraAvaliacao` já
+            // devolve null se a IA falhar: o laudo não deixa de abrir por
+            // causa de um texto acessório.
+            'resumoIa' => $resumos->paraAvaliacao($assessment),
         ]);
     }
 

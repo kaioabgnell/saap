@@ -3,8 +3,10 @@
 namespace App\Providers;
 
 use App\Domain\Vbmapp\Catalog\CatalogMemo;
+use App\Models\Appointment;
 use App\Models\Assessment;
 use App\Models\Learner;
+use App\Policies\AppointmentPolicy;
 use App\Policies\AssessmentPolicy;
 use App\Policies\LearnerPolicy;
 use Illuminate\Support\Facades\Gate;
@@ -47,5 +49,6 @@ class AppServiceProvider extends ServiceProvider
 
         Gate::policy(Learner::class, LearnerPolicy::class);
         Gate::policy(Assessment::class, AssessmentPolicy::class);
+        Gate::policy(Appointment::class, AppointmentPolicy::class);
     }
 }

@@ -32,3 +32,34 @@ PY;
 
     return $texto;
 }
+
+/**
+ * Conta quantas imagens estão embutidas na primeira página do PDF.
+ *
+ * Usada para confirmar que a logo do cabeçalho (incorporada em base64 no
+ * payload — ver BuildReportPayload::logoEmBase64()) chegou de fato ao PDF
+ * como imagem, e não só como texto alternativo.
+ */
+function contarImagensDoPdf(string $conteudoBinario): int
+{
+    $temp = tempnam(sys_get_temp_dir(), 'saap-pdf-').'.pdf';
+    file_put_contents($temp, $conteudoBinario);
+
+    $python = base_path('.venv-tools/bin/python');
+    $script = <<<'PY'
+import sys, pymupdf
+doc = pymupdf.open(sys.argv[1])
+print(len(doc[0].get_images()))
+PY;
+
+    $scriptPath = tempnam(sys_get_temp_dir(), 'saap-pdf-script-').'.py';
+    file_put_contents($scriptPath, $script);
+
+    $comando = escapeshellarg($python).' '.escapeshellarg($scriptPath).' '.escapeshellarg($temp);
+    $saida = trim(shell_exec($comando) ?? '0');
+
+    unlink($temp);
+    unlink($scriptPath);
+
+    return (int) $saida;
+}

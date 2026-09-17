@@ -131,6 +131,19 @@
     .checklist-item .caixa { border: 1px solid #94A3B8; width: 8px; height: 8px; display: inline-block; margin-right: 3px; }
 
     .observacoes { font-size: 8.5px; color: #64748B; margin-top: 4px; border-top: 1px dashed #E2E8F0; padding-top: 3px; }
+
+    /* Resumo por IA. O bloco tem moldura própria e um aviso de autoria no
+       topo: quem folheia o PDF precisa saber onde termina o que a psicóloga
+       apurou e começa o que a máquina redigiu — sem depender de ler tudo. */
+    .resumo { border: 1px solid #E2E8F0; border-radius: 4px; padding: 10px 12px; margin-bottom: 14px; }
+    .resumo h2 { font-size: 12px; color: #0F172A; margin: 0 0 6px 0; padding: 0; border: 0; }
+    .resumo .aviso-ia {
+        font-size: 8px; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A;
+        border-radius: 3px; padding: 5px 7px; margin-bottom: 8px; line-height: 1.5;
+    }
+    .resumo p { font-size: 9.5px; color: #1E293B; line-height: 1.6; margin: 0 0 6px 0; text-align: justify; }
+    .resumo .titulo-secao { font-size: 9.5px; color: #0F172A; font-weight: bold; margin: 8px 0 2px 0; }
+    .resumo .rodape-ia { font-size: 8px; color: #64748B; margin-top: 8px; border-top: 1px solid #E2E8F0; padding-top: 5px; }
     .linha-vazia { border-bottom: 1px solid #CBD5E1; display: block; height: 12px; margin-top: 4px; }
 </style>
 </head>
@@ -169,6 +182,32 @@
     </tr></table>
 </footer>
 
+@if ($resumo)
+    <div class="resumo">
+        <h2>Resumo da avaliação — Nível {{ $payload->level }}</h2>
+
+        {{-- O aviso vem ANTES do texto, não em nota de rodapé: quem recebe
+             este PDF precisa saber quem escreveu antes de começar a ler. --}}
+        <div class="aviso-ia">
+            <b>Texto gerado por inteligência artificial</b> a partir das pontuações registradas.
+            Não substitui a avaliação, o parecer nem o laudo do profissional responsável.
+        </div>
+
+        @foreach ($resumo->paragrafos() as $paragrafo)
+            @if ($paragrafo['titulo'])
+                <div class="titulo-secao">{{ $paragrafo['texto'] }}</div>
+            @else
+                <p>{{ $paragrafo['texto'] }}</p>
+            @endif
+        @endforeach
+
+        <div class="rodape-ia">
+            Gerado em {{ $resumo->generated_at->format('d/m/Y \à\s H:i') }} · modelo {{ $resumo->model }}
+        </div>
+    </div>
+@endif
+
+@if ($incluirResultado)
 @foreach ($payload->areas as $area)
     <h2 class="area">{{ $area->shortName }} — {{ $area->name }}</h2>
 
@@ -222,6 +261,7 @@
         </table>
     @endforeach
 @endforeach
+@endif
 
 </body>
 </html>

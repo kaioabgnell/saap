@@ -86,11 +86,27 @@ class ItemCard extends Component
 
     public ?string $erro = null;
 
-    public function mount(Assessment $assessment, Item $item, ?Response $response = null): void
-    {
+    /**
+     * Carregar as figuras do acervo já no render, sem esperar a rolagem.
+     *
+     * Verdadeiro quando a tela mostra UMA área — é o modo normal de aplicação,
+     * e ali o psicólogo precisa das figuras prontas antes de chegar no marco,
+     * não depois. Falso em "todas as áreas", onde o nível inteiro renderiza de
+     * uma vez e carregar tudo custaria dezenas de MB. Ver stimulus-grid.
+     */
+    #[Locked]
+    public bool $imagensImediatas = true;
+
+    public function mount(
+        Assessment $assessment,
+        Item $item,
+        ?Response $response = null,
+        bool $imagensImediatas = true,
+    ): void {
         $this->assessmentId = $assessment->id;
         $this->itemId = $item->id;
         $this->level = $item->level;
+        $this->imagensImediatas = $imagensImediatas;
 
         $this->hidratar($item, $response);
     }
@@ -432,6 +448,21 @@ class ItemCard extends Component
         $item = $this->item;
 
         return CatalogCache::materialPagesFor($this->level, $item->area_id, $item->position);
+    }
+
+    /**
+     * O marco já mostra as próprias figuras — grade (CounterStimuli) ou
+     * matriz (Matrix) com acervo curado? Se sim, a página inteira do PDF é
+     * referência redundante: a figura recortada já está na tela, maior e
+     * junto do check. Continua útil só para o que não tem acervo próprio —
+     * ex.: Tato 7 do nível 2, uma matriz de 50 linhas sem imagem nenhuma.
+     */
+    public function temGaleriaPropria(): bool
+    {
+        $item = $this->item;
+
+        return in_array($item->response_type, [ResponseType::CounterStimuli, ResponseType::Matrix], true)
+            && $item->stimuli->isNotEmpty();
     }
 
     /** Acréscimo em counter_list — o instrumento autoriza escrever itens fora da lista fixa. */

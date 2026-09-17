@@ -1,6 +1,9 @@
 @import '@fortawesome/fontawesome-free/css/fontawesome.css';
 @import '@fortawesome/fontawesome-free/css/solid.css';
 @import '@fortawesome/fontawesome-free/css/regular.css';
+/* 'brands' carrega o glifo do WhatsApp do botão de lembrete — sem este
+   import o fa-brands existe no HTML mas não tem fonte nenhuma por trás. */
+@import '@fortawesome/fontawesome-free/css/brands.css';
 
 @tailwind base;
 @tailwind components;

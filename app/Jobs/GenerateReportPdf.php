@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Jobs;
 
+use App\Application\Report\GenerateAiSummary;
 use App\Models\ReportSnapshot;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
@@ -29,15 +30,19 @@ class GenerateReportPdf implements ShouldQueue
 
     public function __construct(public readonly int $snapshotId) {}
 
-    public function handle(): void
+    public function handle(GenerateAiSummary $resumos): void
     {
         try {
-            $snapshot = ReportSnapshot::with('assessment.learner')->findOrFail($this->snapshotId);
+            $snapshot = ReportSnapshot::with('assessment.learner', 'assessment.levels')->findOrFail($this->snapshotId);
 
             $pdf = Pdf::loadView('pdf.relatorio.documento', [
                 'payload' => $snapshot->reportPayload(),
                 'hash' => $snapshot->content_hash,
                 'geradoEm' => $snapshot->generated_at->format('d/m/Y H:i'),
+                // O MESMO resumo que a tela mostra: `paraAvaliacao` gera uma
+                // vez e reaproveita. Se a tela foi aberta antes, o PDF pega o
+                // texto que a psicóloga já leu — e não uma segunda redação.
+                'resumoIa' => $resumos->paraAvaliacao($snapshot->assessment),
             ])->setPaper('a4', 'portrait');
 
             $pdf->render();

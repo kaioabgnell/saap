@@ -36,6 +36,8 @@ class ProfileUpdateRequest extends FormRequest
             'clinic_city' => ['nullable', 'string', 'max:120'],
             'clinic_state' => ['nullable', 'string', 'size:2'],
             'clinic_zip' => ['nullable', 'string', 'max:9'],
+            'clinic_logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_clinic_logo' => ['nullable', 'boolean'],
         ];
     }
 }

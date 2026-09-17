@@ -6,7 +6,7 @@
         </p>
     </header>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-6">
+    <form method="post" action="{{ route('profile.update') }}" enctype="multipart/form-data" class="mt-6 space-y-6">
         @csrf
         @method('patch')
 
@@ -22,6 +22,43 @@
             <x-input-label for="clinic_name" value="Nome da clínica" />
             <x-text-input id="clinic_name" name="clinic_name" type="text" class="mt-1 block w-full" :value="old('clinic_name', $user->clinic_name)" />
             <x-input-error for="clinic_name" class="mt-2" :messages="$errors->get('clinic_name')" />
+        </div>
+
+        {{-- Logo da clínica: é o que substitui o "SAAP" no cabeçalho do
+             relatório em PDF. A pré-visualização mostra exatamente o que sai
+             no laudo — inclusive a logo do sistema, quando não há nenhuma
+             própria (ver BuildReportPayload::logoEmBase64()). --}}
+        <div>
+            <x-input-label value="Logo da clínica" />
+            <p class="mt-1 text-xs text-ink-subtle">
+                Aparece no cabeçalho do relatório em PDF. Sem logo própria, o
+                relatório usa a logo do SAAP.
+            </p>
+
+            <div class="mt-3 flex items-center gap-4">
+                <div class="flex h-16 w-32 flex-none items-center justify-center rounded-md border border-line bg-canvas p-2">
+                    @if ($user->clinicLogoUrl())
+                        <img src="{{ $user->clinicLogoUrl() }}" alt="Logo da clínica" class="max-h-full max-w-full object-contain">
+                    @else
+                        <x-application-logo class="max-h-8 max-w-full" />
+                    @endif
+                </div>
+
+                <div class="flex-1">
+                    <input id="clinic_logo" name="clinic_logo" type="file" accept="image/jpeg,image/png,image/webp"
+                           class="block w-full text-sm text-ink-muted file:mr-4 file:rounded-md file:border-0 file:bg-primary-soft file:px-4 file:py-2 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20">
+                    <p class="mt-1 text-xs text-ink-subtle">JPEG, PNG ou WebP, até 2&nbsp;MB.</p>
+
+                    @if ($user->clinicLogoUrl())
+                        <label for="remove_clinic_logo" class="mt-2 flex min-h-[28px] items-center gap-2">
+                            <input id="remove_clinic_logo" name="remove_clinic_logo" type="checkbox" value="1"
+                                   class="h-4 w-4 rounded border-line text-primary focus:ring-primary">
+                            <span class="text-sm text-ink-muted">Remover logo e voltar a usar a do SAAP</span>
+                        </label>
+                    @endif
+                </div>
+            </div>
+            <x-input-error for="clinic_logo" class="mt-2" :messages="$errors->get('clinic_logo')" />
         </div>
 
         <div class="grid gap-6 sm:grid-cols-2">

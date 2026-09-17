@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    /*
+     * Resumo de nível gerado por IA — ver App\Support\Ia\GeminiSummarizer.
+     *
+     * `timeout` curto de propósito: o resumo é acessório do PDF. Se o Google
+     * demorar, o formulário sai sem ele; prender a fila esperando texto de
+     * cortesia seria trocar o essencial pelo opcional.
+     */
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-3.5-flash-lite'),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 45),
+    ],
+
 ];

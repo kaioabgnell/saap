@@ -19,7 +19,10 @@ class LearnerFactory extends Factory
             'birth_date' => fake()->dateTimeBetween('-12 years', '-2 years')->format('Y-m-d'),
             'father_name' => fake()->name('male'),
             'mother_name' => fake()->name('female'),
-            'contact_phone' => fake()->phoneNumber(),
+            // Celular brasileiro, não o phoneNumber() do faker en_US: o
+            // lembrete do WhatsApp exige um número que normalize para E.164,
+            // e "1-555-555-5555" não normaliza. Ver App\Domain\Contact\PhoneNumber.
+            'contact_phone' => '(11) 9'.fake()->numerify('####-####'),
         ];
     }
 }

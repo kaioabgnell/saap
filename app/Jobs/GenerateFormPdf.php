@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Jobs;
 
 use App\Application\Report\BuildFormPayload;
+use App\Application\Report\GenerateAiSummary;
+use App\Models\AiSummary;
 use App\Models\Assessment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Bus\Queueable;
@@ -38,9 +40,11 @@ class GenerateFormPdf implements ShouldQueue
         public readonly bool $includeCriteria,
         public readonly bool $includeExamples,
         public readonly string $slugAprendiz,
+        public readonly bool $includeResults = true,
+        public readonly bool $includeAiSummary = false,
     ) {}
 
-    public function handle(BuildFormPayload $builder): void
+    public function handle(BuildFormPayload $builder, GenerateAiSummary $resumos): void
     {
         // A fila 'sync' (usada nos testes) não intercepta exceção nenhuma —
         // ela propagaria direto para quem chamou o dispatch. $this->fail()
@@ -57,8 +61,11 @@ class GenerateFormPdf implements ShouldQueue
                 $this->includeExamples,
             );
 
-            $pdf = Pdf::loadView('pdf.formulario.documento', ['payload' => $payload])
-                ->setPaper('a4', 'portrait');
+            $pdf = Pdf::loadView('pdf.formulario.documento', [
+                'payload' => $payload,
+                'incluirResultado' => $this->includeResults,
+                'resumo' => $this->resumo($resumos),
+            ])->setPaper('a4', 'portrait');
 
             // A contagem total de páginas só existe depois do render — por
             // isso o rodapé não usa {PAGE_COUNT} na própria view (a view não
@@ -82,6 +89,34 @@ class GenerateFormPdf implements ShouldQueue
             $this->marcarStatus(['status' => 'ready', 'path' => $caminho, 'filename' => $nomeArquivo]);
         } catch (Throwable $e) {
             $this->fail($e);
+        }
+    }
+
+    /**
+     * O resumo por IA é ACESSÓRIO do PDF, e o tratamento aqui é o que garante
+     * isso: qualquer falha — chave errada, Google fora do ar, nível que
+     * deixou de estar completo entre o clique e a fila — devolve null e o
+     * formulário sai do mesmo jeito, sem o bloco. Trocar um PDF inteiro por
+     * um texto de cortesia seria o pior negócio possível para quem está com a
+     * criança esperando.
+     *
+     * O `catch` é de Throwable e não de Exception de propósito: um erro de
+     * tipo dentro do cliente HTTP também não pode derrubar o formulário.
+     */
+    private function resumo(GenerateAiSummary $resumos): ?AiSummary
+    {
+        if (! $this->includeAiSummary) {
+            return null;
+        }
+
+        try {
+            $assessment = Assessment::with('learner')->findOrFail($this->assessmentId);
+
+            return $resumos->handle($assessment, $this->level);
+        } catch (Throwable) {
+            // Sem log do erro: a mensagem pode carregar trecho do que foi
+            // enviado, e nada de aprendiz vai para log (docs/operacao.md).
+            return null;
         }
     }
 

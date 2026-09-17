@@ -2990,6 +2990,13 @@
                     "Função"
                 ]
             },
+            "fixed_list": [
+                "bola de tênis",
+                "dado",
+                "geladeira",
+                "maçã",
+                "pizza"
+            ],
             "response_type": "matrix",
             "threshold_full": 15,
             "scoring_mode": "auto",

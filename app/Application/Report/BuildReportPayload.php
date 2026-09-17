@@ -12,6 +12,7 @@ use App\Models\Response;
 use App\Models\Vbmapp\Item;
 use App\Models\Vbmapp\Stimulus;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Monta o laudo a partir do catálogo e das respostas, no momento da conclusão.
@@ -57,6 +58,13 @@ final class BuildReportPayload
                     'endereco' => $assessment->user->clinic_address,
                     'cidade' => $assessment->user->clinic_city,
                     'uf' => $assessment->user->clinic_state,
+                    // Incorporada em base64, não referenciada por caminho: o
+                    // dompdf roda com `enable_remote` desligado (não busca
+                    // URL nenhuma) e uma logo trocada meses depois não pode
+                    // mudar a aparência de um laudo já emitido — mesmo motivo
+                    // por que o resto da clínica é duplicado aqui, e não lido
+                    // por join. Sem logo própria, cai na do sistema.
+                    'logo' => $this->logoEmBase64($assessment->user->clinic_logo_path),
                 ],
             ],
             'aplicacao' => [
@@ -81,6 +89,38 @@ final class BuildReportPayload
             ],
             'observacoes' => $assessment->observations,
         ]);
+    }
+
+    /**
+     * A logo do cabeçalho do relatório, incorporada como data URI.
+     *
+     * Data URI, e não caminho de arquivo, por três motivos: o dompdf roda
+     * com `enable_remote` desligado — uma URL http(s) simplesmente falharia
+     * — e mesmo `file://` dependeria de o arquivo continuar existindo no
+     * mesmo lugar para sempre; a `data:` é a única forma que sobrevive à
+     * clínica trocar ou apagar a própria logo depois de o laudo emitido.
+     *
+     * O arquivo do sistema é a versão de 720px (`logo-saap-relatorio.png`),
+     * não o wordmark de 1299px da interface: esta imagem vai embutida no
+     * payload de TODO laudo, fica no banco para sempre e é desenhada com no
+     * máximo 175px de largura. A versão grande custava 172 KB por laudo — e
+     * o dompdf decodificava tudo isso a cada renderização. Logo enviada pela
+     * clínica já chega limitada pelo ClinicLogoUploader, na mesma medida.
+     */
+    private function logoEmBase64(?string $clinicLogoPath): string
+    {
+        $caminho = $clinicLogoPath !== null && Storage::disk('public')->exists($clinicLogoPath)
+            ? Storage::disk('public')->path($clinicLogoPath)
+            : public_path('images/logo-saap-relatorio.png');
+
+        $mime = match (strtolower((string) pathinfo($caminho, PATHINFO_EXTENSION))) {
+            'png' => 'image/png',
+            'webp' => 'image/webp',
+            'jpg', 'jpeg' => 'image/jpeg',
+            default => 'image/png',
+        };
+
+        return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($caminho));
     }
 
     /** @param Collection<int, Response> $respostas */

@@ -19,7 +19,7 @@ class Item extends Model
 
     protected $fillable = [
         'area_id', 'level', 'position', 'code',
-        'statement', 'objective', 'materials', 'examples',
+        'statement', 'objective', 'materials', 'examples', 'stimulus_prompt',
         'criteria_full', 'criteria_half',
         'response_type', 'threshold_full', 'threshold_half',
         'scoring_mode', 'observation_minutes',

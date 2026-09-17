@@ -19,6 +19,7 @@
     table.cabecalho { width: 100%; border-collapse: collapse; }
     table.cabecalho td { vertical-align: top; padding: 0; }
 
+    .logo-cabecalho { max-height: 34px; max-width: 175px; }
     .marca { font-size: 14px; font-weight: bold; color: #4338CA; letter-spacing: 2px; }
     .marca-sub { font-size: 8px; color: #94A3B8; }
     .selo-final {
@@ -67,6 +68,18 @@
         border: 1px solid #E2E8F0; font-size: 8px; color: #64748B;
     }
     .hash { font-family: 'DejaVu Sans Mono', monospace; font-size: 7px; word-break: break-all; }
+
+    /* Resumo por IA. Moldura própria e aviso de autoria no topo: quem folheia
+       o laudo precisa saber onde termina o que a psicóloga apurou e começa o
+       que a máquina redigiu — sem depender de ler tudo. */
+    .resumo-ia { border: 1px solid #E2E8F0; border-radius: 4px; padding: 10px 12px; margin-bottom: 14px; }
+    .resumo-ia .aviso {
+        font-size: 8px; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A;
+        border-radius: 3px; padding: 5px 7px; margin-bottom: 8px; line-height: 1.5;
+    }
+    .resumo-ia p { font-size: 9.5px; color: #1E293B; line-height: 1.6; margin: 0 0 6px 0; text-align: justify; }
+    .resumo-ia .titulo-secao { font-size: 9.5px; color: #0F172A; font-weight: bold; margin: 8px 0 2px 0; }
+    .resumo-ia .rodape { font-size: 8px; color: #64748B; margin-top: 8px; border-top: 1px solid #E2E8F0; padding-top: 5px; }
 </style>
 @include('pdf.relatorio._estilo')
 </head>
@@ -77,10 +90,28 @@
     <table class="cabecalho">
         <tr>
             <td style="width: 38%;">
-                <span class="marca">SAAP</span><br>
-                <span class="marca-sub">Sistema de Avaliação de Aprendiz</span>
-                @if ($d['aplicador']['clinica']['nome'])
-                    <br><span class="info-linha">{{ $d['aplicador']['clinica']['nome'] }}</span>
+                {{-- Logo própria da clínica ou, na ausência, a do sistema —
+                     sempre uma das duas, nunca as duas juntas. Incorporada em
+                     base64 no payload: ver BuildReportPayload::logoEmBase64().
+
+                     A chave só existe em payload gerado a partir desta versão;
+                     laudo já emitido antes dela não tem 'logo' nenhuma, e por
+                     isso mantém aqui o texto que sempre teve — não é este
+                     template que decide retroagir a aparência de um laudo que
+                     já foi entregue. --}}
+                @if (! empty($d['aplicador']['clinica']['logo']))
+                    <img src="{{ $d['aplicador']['clinica']['logo'] }}" alt="" class="logo-cabecalho"><br>
+                    @if ($d['aplicador']['clinica']['nome'])
+                        <span class="info-linha">{{ $d['aplicador']['clinica']['nome'] }}</span>
+                    @else
+                        <span class="marca-sub">Sistema de Avaliação de Aprendiz</span>
+                    @endif
+                @else
+                    <span class="marca">SAAP</span><br>
+                    <span class="marca-sub">Sistema de Avaliação de Aprendiz</span>
+                    @if ($d['aplicador']['clinica']['nome'])
+                        <br><span class="info-linha">{{ $d['aplicador']['clinica']['nome'] }}</span>
+                    @endif
                 @endif
             </td>
             <td style="width: 42%;">
@@ -108,6 +139,29 @@
 <footer>
     Relatório VB-MAPP gerado em {{ $geradoEm }} — conteúdo licenciado do instrumento
 </footer>
+
+@if ($resumoIa ?? null)
+    <h1 class="secao">Resumo da avaliação</h1>
+
+    <div class="resumo-ia">
+        <div class="aviso">
+            <b>Texto gerado por inteligência artificial</b> a partir das pontuações registradas.
+            Não substitui a avaliação, o parecer nem o laudo do profissional responsável.
+        </div>
+
+        @foreach ($resumoIa->paragrafos() as $paragrafo)
+            @if ($paragrafo['titulo'])
+                <div class="titulo-secao">{{ $paragrafo['texto'] }}</div>
+            @else
+                <p>{{ $paragrafo['texto'] }}</p>
+            @endif
+        @endforeach
+
+        <div class="rodape">
+            Gerado em {{ $resumoIa->generated_at->format('d/m/Y \à\s H:i') }} · modelo {{ $resumoIa->model }}
+        </div>
+    </div>
+@endif
 
 <h1 class="secao">Resumo</h1>
 

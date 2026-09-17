@@ -1,20 +1,30 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <h2 class="text-xl font-semibold leading-tight text-ink">{{ $learner->name }}</h2>
             <div class="flex items-center gap-3">
+                <a href="{{ route('aprendizes.index') }}"
+                   class="flex h-9 w-9 items-center justify-center rounded-md text-ink-muted hover:bg-canvas hover:text-ink"
+                   aria-label="Voltar para aprendizes">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+                </a>
+                <h2 class="text-xl font-semibold leading-tight text-ink">{{ $learner->name }}</h2>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('aprendizes.prontuario', $learner) }}"
+                   class="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-line px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas">
+                    <i class="fa-solid fa-folder-open text-ink-muted" aria-hidden="true"></i>
+                    Prontuário
+                </a>
                 <a href="{{ route('aprendizes.edit', $learner) }}"
                    class="inline-flex min-h-[44px] items-center rounded-md border border-line px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas">
                     Editar
                 </a>
-                <form method="POST" action="{{ route('aprendizes.destroy', $learner) }}"
-                      onsubmit="return confirm('Excluir {{ $learner->name }}? Esta ação não pode ser desfeita.');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="inline-flex min-h-[44px] items-center rounded-md px-3 py-1.5 text-sm font-medium text-danger hover:bg-danger-soft">
-                        Excluir
-                    </button>
-                </form>
+                <button type="button" x-data=""
+                        x-on:click="$dispatch('open-modal', 'excluir-aprendiz')"
+                        class="inline-flex min-h-[44px] items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-danger hover:bg-danger-soft">
+                    <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                    Excluir
+                </button>
             </div>
         </div>
     </x-slot>
@@ -73,7 +83,7 @@
                         <a href="{{ route('lancamento.create', $learner) }}"
                            class="inline-flex min-h-[44px] items-center gap-2 rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-canvas">
                             <i class="fa-solid fa-file-pen text-ink-muted" aria-hidden="true"></i>
-                            Lançar avaliação em papel
+                            Lançar avaliação manual
                         </a>
 
                         {{-- Uma aplicação guiada aberta por vez. A condição olha só
@@ -109,4 +119,56 @@
             </div>
         </div>
     </div>
+
+    {{-- Confirmação de exclusão. A avaliação concluída já bloqueia no
+         servidor (LearnerController::destroy) — aqui a tela avisa disso
+         ANTES do clique, em vez de deixar a psicóloga confirmar uma
+         exclusão que só vai voltar com erro. --}}
+    @php $bloqueadoPorAvaliacao = $learner->hasCompletedAssessment(); @endphp
+    <x-modal name="excluir-aprendiz" focusable max-width="sm">
+        <div class="p-6">
+            <div class="flex items-start gap-4">
+                <span class="flex h-11 w-11 flex-none items-center justify-center rounded-full bg-danger-soft">
+                    <i class="fa-solid fa-triangle-exclamation text-lg text-danger" aria-hidden="true"></i>
+                </span>
+
+                @if ($bloqueadoPorAvaliacao)
+                    <div class="min-w-0">
+                        <h2 class="text-base font-semibold text-ink">Não é possível excluir {{ $learner->name }}</h2>
+                        <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">
+                            Este aprendiz tem uma avaliação concluída, e o laudo emitido precisa
+                            continuar rastreável ao cadastro. Para preservar o histórico, o
+                            cadastro não pode ser excluído.
+                        </p>
+                    </div>
+                @else
+                    <div class="min-w-0">
+                        <h2 class="text-base font-semibold text-ink">Excluir {{ $learner->name }}?</h2>
+                        <p class="mt-1.5 text-sm leading-relaxed text-ink-muted">
+                            O cadastro, os dados de contato e a foto deste aprendiz saem da sua
+                            lista de aprendizes.
+                            <span class="font-medium text-ink">Esta ação não pode ser desfeita por aqui.</span>
+                        </p>
+                    </div>
+                @endif
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <x-secondary-button x-on:click="$dispatch('close')">
+                    {{ $bloqueadoPorAvaliacao ? 'Entendi' : 'Cancelar' }}
+                </x-secondary-button>
+
+                @unless ($bloqueadoPorAvaliacao)
+                    <form method="POST" action="{{ route('aprendizes.destroy', $learner) }}">
+                        @csrf
+                        @method('DELETE')
+                        <x-danger-button type="submit">
+                            <i class="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                            Excluir aprendiz
+                        </x-danger-button>
+                    </form>
+                @endunless
+            </div>
+        </div>
+    </x-modal>
 </x-app-layout>

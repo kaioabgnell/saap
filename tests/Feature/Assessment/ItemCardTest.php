@@ -227,6 +227,75 @@ it('grava o estímulo acertado na grade', function () {
     expect($marcados)->toContain($estimulos[0]->id, $estimulos[1]->id);
 });
 
+it('carrega as figuras já no render quando a tela mostra uma área', function () {
+    // Com `lazy`, a figura só baixa quando a rolagem chega perto — e o
+    // psicólogo chega no marco antes dela, com a criança esperando na frente
+    // de um quadrado em branco.
+    $item = marcoDe('tato', 1);
+    Stimulus::factory()->for($item, 'item')->create(['label' => 'bola', 'position' => 1]);
+    CatalogCache::flush();
+
+    $html = Livewire::test(ItemCard::class, [
+        'assessment' => $this->assessment,
+        'item' => $item->fresh(),
+        'imagensImediatas' => true,
+    ])->html();
+
+    expect($html)->toContain('loading="eager"');
+});
+
+it('adia as figuras quando o nível inteiro renderiza de uma vez', function () {
+    // "Todas as áreas" monta os 45 marcos juntos: o acervo do nível 1 passa de
+    // 10 MB, e aí esperar a rolagem é o certo.
+    $item = marcoDe('tato', 1);
+    Stimulus::factory()->for($item, 'item')->create(['label' => 'bola', 'position' => 1]);
+    CatalogCache::flush();
+
+    $html = Livewire::test(ItemCard::class, [
+        'assessment' => $this->assessment,
+        'item' => $item->fresh(),
+        'imagensImediatas' => false,
+    ])->html();
+
+    expect($html)->not->toContain('loading="eager"');
+});
+
+it('deixa marcar a figura sem sair do modo apresentação', function () {
+    $item = marcoDe('tato', 1);
+
+    $estimulos = collect(['bola', 'gato'])->map(
+        fn ($rotulo, $i) => Stimulus::factory()->for($item, 'item')
+            ->create(['label' => $rotulo, 'position' => $i + 1]),
+    );
+    CatalogCache::flush();
+
+    $html = cartao($item->fresh())->html();
+
+    // A apresentação é o que a criança olha: a mesma figura aparece nela e na
+    // grade, e as duas gravam no mesmo lugar. Dois checkboxes por estímulo é
+    // o que prova que dá para marcar dos dois lados.
+    foreach ($estimulos as $estimulo) {
+        expect(substr_count($html, 'wire:model.live="estimulos.'.$estimulo->id.'"'))->toBe(2);
+    }
+});
+
+it('não mostra o rótulo da figura na apresentação', function () {
+    // Ler "bola" ao lado da figura entregaria a resposta para a criança que
+    // já lê. Na grade o rótulo fica; na apresentação, não.
+    $item = marcoDe('tato', 1);
+    Stimulus::factory()->for($item, 'item')->create(['label' => 'bola', 'position' => 1]);
+    CatalogCache::flush();
+
+    $html = cartao($item->fresh())->html();
+
+    $apresentacao = substr($html, strpos($html, 'Estímulos em tela cheia'));
+
+    // Continua legível para leitor de tela — só não fica à vista da criança.
+    expect($apresentacao)->toContain('sr-only">bola')
+        // A classe do rótulo visível da grade não aparece na apresentação.
+        ->and($apresentacao)->not->toContain('text-[13px] text-ink-muted');
+});
+
 it('completa com caixas de texto quando faltam imagens', function () {
     $item = marcoDe('tato', 5); // precisa de 10
 

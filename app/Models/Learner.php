@@ -44,6 +44,11 @@ class Learner extends Model
         return $this->hasMany(Assessment::class);
     }
 
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     /** Idade calculada na referência dada — nunca "hoje" para fins de laudo. */
     public function ageAt(\DateTimeInterface|string $reference): Age
     {

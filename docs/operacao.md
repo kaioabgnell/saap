@@ -81,8 +81,41 @@ php artisan vbmapp:import-pages --levels=1
 Depois, confira os rótulos em `/admin/estimulos` — a inferência acerta a maior
 parte, não todos.
 
-> Os níveis 2 e 3 têm 233 páginas e **não foram curados na v1**. O pipeline é o
-> mesmo; falta rodar e revisar.
+> Os níveis 2 e 3 têm 233 páginas e **não foram curados na v1** pelo pipeline
+> acima. O que existe do nível 3 veio pela curadoria à mão, abaixo.
+
+### Acervo curado à mão (nível 3)
+
+Cinco marcos do nível 3 usam figuras escolhidas uma a uma, e não recortes do
+PDF: Tato 11 (5 objetos), 12 (preposições), 13 (adjetivos e advérbios), 14 (20
+sentenças) e Ouvinte 11 (34 figuras para seleção por cor ou forma). As imagens
+ficam em `docs/material-aplicacao/nivel3/<area><posicao>/` e os rótulos, em
+`database/data/vbmapp-estimulos-nivel-3.json` — este arquivo é a fonte da
+verdade.
+
+O campo opcional `instrucao` de cada marco vira `vbmapp_items.stimulus_prompt`:
+a frase que a psicóloga lê acima da grade ("Solicitar algum desses falando cor
+ou forma", no Ouvinte 11). Ela não aparece na tela de apresentação, que é a que
+a criança olha.
+
+Marco com acervo próprio **deixa de mostrar os botões "Página N do material"** —
+a figura recortada já está na tela, e a página inteira do PDF ao lado seria a
+mesma informação, pior.
+
+```bash
+php artisan vbmapp:import-stimuli --level=3 --dry-run   # confere sem gravar
+php artisan vbmapp:import-stimuli --level=3
+```
+
+Rodar de novo reconstrói o mesmo acervo: não duplica estímulo nem deixa
+arquivo órfão no disco. Figura opaca é convertida para JPEG (o acervo cai de
+8,6 MB para 1,3 MB); só o que tem transparência de verdade continua PNG.
+
+**Tato 11 é matriz, não grade.** As 5 figuras são as *linhas* — cada objeto
+recebe três perguntas (cor, forma, função), que são as 15 tentativas do
+manual. Por isso os rótulos do JSON têm de ser exatamente as linhas de
+`fixed_list` do catálogo; o comando recusa a importação se divergirem, porque
+uma figura órfã sumiria da grade sem erro nenhum.
 
 ## Manutenção automática
 
@@ -133,6 +166,43 @@ php artisan queue:restart
 Em desenvolvimento a fila pode rodar como `sync` (`QUEUE_CONNECTION=sync`) —
 o job executa na própria requisição, sem worker. **Não use em produção**: o
 PDF do relatório completo leva ~9 s e estouraria o tempo da requisição.
+
+## "Sem conexão" na aplicação de um nível
+
+Sintoma: durante a aplicação, o rodapé mostra "Sem conexão — tentando salvar
+de novo" e, se persistir, escala para "Não foi possível salvar. Recarregue a
+página." com um botão de recarregar. É `resources/js/fila-salvamento.js` —
+não tem relação com a fila de PDF acima.
+
+**Por que acontece.** O commit de um marco falhou — quase sempre porque a
+sessão do psicólogo venceu no meio da observação (marcos exigem 30-60 min
+antes de qualquer salvamento; ver regra de domínio 7 do CLAUDE.md), e o
+navegador recebeu 419. A tela reage sozinha: reenvia a ação exata que falhou
+(não um "salvar" genérico) por até 6 tentativas (~90 s de backoff). Se a causa
+for mesmo sessão vencida, reenviar com o mesmo token nunca converge — por
+isso, esgotadas as tentativas, a fila desiste de insistir sozinha e pede
+recarregamento em vez de ficar presa num "Sem conexão" que nunca se resolve.
+
+**A correção estrutural já é `SESSION_LIFETIME=720`** (12 h, não os 120 min
+padrão do Laravel) em `.env` — evita que a sessão vença durante uma aplicação
+normal. Se o sintoma voltar a aparecer com frequência, é sinal de que 12 h não
+bastam para o uso real, e o valor deve subir, não a explicação ser descartada.
+
+**Ao investigar um relato:**
+
+```bash
+# a sessão do psicólogo ainda existe e com que TTL?
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -u root saap_local -e "
+  SELECT id, user_id, last_activity, FROM_UNIXTIME(last_activity) AS quando
+  FROM sessions ORDER BY last_activity DESC LIMIT 5;"
+```
+
+Se `last_activity` está muito no passado, a sessão realmente venceu — o
+recarregamento (que pede novo login) é o caminho certo, e o que estava
+digitado desde o último salvamento com sucesso se perde. É o mesmo limite já
+documentado no cabeçalho de `fila-salvamento.js`: item na fila e aba fechada
+também perde o que não gravou. Nenhum dos dois casos é recuperável batendo no
+banco — a resposta perdida precisa ser reaplicada com a criança.
 
 ## Backup e restauração
 
@@ -187,6 +257,10 @@ uma hipótese, não um backup.
 | Laudo emitido | idem | `report_snapshots` | idem |
 | Cadastro do psicólogo | Execução de contrato | `users` | Enquanto a conta existir |
 | Acesso a laudo | Obrigação legal de rastreabilidade | `report_access_logs` | Acompanha o laudo |
+| Horário e comparecimento | Tutela da saúde | `appointments` | Prontuário: 20 anos (Res. CFP 001/2009) |
+| Registro escrito da sessão | idem | `appointments.notes`, `appointment_addenda` | idem |
+| Resumo de nível redigido por IA | Tutela da saúde | `ai_summaries` | Prontuário: 20 anos |
+| Pontuação por área enviada ao Google (Gemini) | Tutela da saúde | **sai da plataforma** — ver abaixo | Retenção do provedor |
 
 Garantias implementadas:
 
@@ -199,6 +273,19 @@ Garantias implementadas:
 - **Nenhum dado de aprendiz vai para log.** A aplicação não faz uma única
   chamada de `Log::` com dado pessoal; as exceções da API respondem com
   mensagem genérica.
+- **Registro de sessão fechado só muda por aditamento datado.** O check-out
+  carimba `notes_locked_at` e a partir daí `SaveSessionNotes` recusa a escrita;
+  a correção entra em `appointment_addenda`, que não tem `updated_at`. O texto
+  original nunca é reescrito — mesma lógica do laudo congelado em snapshot.
+- **A agenda não sai da plataforma.** O lembrete abre o WhatsApp no navegador
+  com a mensagem pronta; nenhum dado é enviado a serviço externo pelo servidor.
+  Por isso a coluna se chama `reminder_opened_at`, e não `sent`.
+- **O resumo por IA é o ÚNICO ponto em que dado clínico sai do servidor.**
+  E sai sem identificação: `App\Domain\Vbmapp\Report\SummaryBriefing` envia
+  nível, pontuação total e pontuação por área, com o avaliado chamado apenas
+  de `{{APRENDIZ}}`. O nome real entra depois, já dentro do SAAP. Nome do
+  aprendiz, dos responsáveis, do psicólogo e da clínica **não são enviados** —
+  há teste garantindo isso (`tests/Feature/Ia/ResumoPorIaTest.php`).
 - **Avaliação concluída é imutável.** Depois de `locked_at`, nada muda — nem
   pela web, nem pela API.
 - **Foto órfã é apagada** diariamente por `saap:prune-orphan-uploads`.
@@ -237,6 +324,147 @@ Pendente, e é decisão da clínica, não do código:
 
 - Exportação de dados a pedido do titular (art. 18) — CSV/JSON por aprendiz
 - Encarregado de dados designado
+
+## Agenda e atendimentos
+
+A agenda vive em `/agenda` e abre no mês. Dia e semana ficam a um clique, e a
+escolha fica guardada na sessão do navegador (`saap.agenda-visao`) — quem
+trabalha no dia não reencontra o mês a cada volta.
+
+### O ciclo de um atendimento
+
+```
+agendar ──> check-in ──> registro escrito ──> check-out ──> prontuário
+   │            (a criança chegou)                 (fecha o texto)
+   ├──> faltou       (no_show — também é registro)
+   └──> cancelado    (com motivo; a linha permanece)
+```
+
+Depois do check-out o texto não se altera mais: a correção entra como
+**aditamento** datado, abaixo do original. Não há como reabrir um atendimento
+concluído, e isso é deliberado — prontuário é documento.
+
+### Conflito de horário
+
+Dois atendimentos que se sobrepõem para o mesmo psicólogo geram **aviso, não
+bloqueio**: a tela mostra quem já está no horário e pede confirmação. Atender
+dois irmãos na mesma hora é decisão clínica legítima.
+
+Encostar não é sobrepor: 15h–16h e 16h–17h não disparam alerta. A regra mora
+em `App\Domain\Schedule\TimeSlot::overlaps()` e é revalidada no servidor,
+dentro da transação da gravação.
+
+### Lembrete por WhatsApp
+
+O botão abre `wa.me` numa aba nova com a mensagem pronta — **quem envia é a
+pessoa**. O telefone vem de `learners.contact_phone` e passa por
+`App\Domain\Contact\PhoneNumber`, que normaliza para E.164.
+
+Quando o número não normaliza, o botão fica desabilitado com o motivo à vista.
+O caso mais comum é o celular antigo de 8 dígitos: falta o nono, e o sistema
+recusa em vez de inventá-lo.
+
+### Conferir a agenda no banco
+
+```bash
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -u root saap_local -e "
+  SELECT a.id, l.name AS aprendiz, a.starts_at, a.ends_at, a.status,
+         a.checked_in_at, a.checked_out_at, a.notes_locked_at
+  FROM appointments a JOIN learners l ON l.id = a.learner_id
+  WHERE a.deleted_at IS NULL AND a.starts_at >= CURDATE()
+  ORDER BY a.starts_at LIMIT 20;"
+```
+
+Sobreposições já gravadas (todas confirmadas pela psicóloga — o sistema nunca
+as cria sozinho):
+
+```bash
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -u root saap_local -e "
+  SELECT a.id, b.id AS conflita_com, a.starts_at, b.starts_at
+  FROM appointments a JOIN appointments b
+    ON b.user_id = a.user_id AND b.id > a.id
+   AND a.starts_at < b.ends_at AND a.ends_at > b.starts_at
+  WHERE a.deleted_at IS NULL AND b.deleted_at IS NULL
+    AND a.status IN ('scheduled','in_progress')
+    AND b.status IN ('scheduled','in_progress');"
+```
+
+### Atendimento que ficou aberto
+
+Um `in_progress` de dias atrás é check-out esquecido. Não há varredura
+automática que o feche: fechar sozinho carimbaria um `checked_out_at` que
+ninguém viveu, num documento de 20 anos. A psicóloga abre o atendimento pela
+agenda e faz o check-out — a duração real sai errada, e o aditamento serve
+para explicar por quê.
+
+```bash
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -u root saap_local -e "
+  SELECT id, learner_id, starts_at, checked_in_at FROM appointments
+  WHERE status = 'in_progress' AND starts_at < CURDATE();"
+```
+
+## Resumo de nível por IA
+
+Ao gerar o PDF do formulário, a psicóloga pode marcar "Análise com IA": um
+resumo do desempenho no nível, em linguagem de prontuário, impresso antes dos
+marcos e com aviso de autoria.
+
+**Quando aparece.** Só com `GEMINI_API_KEY` preenchida E o nível todo
+respondido. Sem chave, o checkbox não existe; com nível incompleto, ele aparece
+desabilitado explicando por quê. Resumir meia avaliação produziria um texto que
+parece completo e não é — e esse texto vai para a família.
+
+**Nunca derruba o PDF.** O resumo é acessório: chave errada, Google fora do ar
+ou resposta vazia fazem o bloco sumir e o formulário sair igual. É o
+`try/catch` em `GenerateFormPdf::resumo()`, e tem três testes só para isso.
+
+### No laudo final
+
+A tela do laudo (`/avaliacoes/{id}/relatorio`) e o PDF permanente **geram o
+resumo sozinhos, sem perguntar** — é a linha de `ai_summaries` com `level`
+NULO, que descreve a avaliação inteira em vez de um nível.
+
+Gerado UMA vez e reaproveitado: a tela e o PDF mostram o mesmo texto, porque
+um laudo cujo resumo muda a cada visita não é laudo. Para forçar outra
+redação, apague a linha:
+
+```bash
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -u root saap_local -e "
+  DELETE FROM ai_summaries WHERE assessment_id = <id> AND level IS NULL;"
+```
+
+**O resumo NÃO entra no `report_snapshots`.** O snapshot é o registro congelado
+e o `content_hash` existe para detectar adulteração dele; escrever texto novo
+lá dentro exigiria recalcular o hash — exatamente o que ele serve para impedir.
+O resumo é outro documento, com outra autoria e outra data, guardado ao lado.
+Há teste garantindo que o hash continua válido depois de o resumo ser gerado.
+
+**Para o PDF sair com o resumo**, o worker precisa estar com o código atual:
+depois de qualquer deploy que mude `GenerateReportPdf`, rode `queue:restart`.
+Sem isso o worker segue com a versão velha em memória e o PDF sai sem o bloco.
+
+**O que é gravado.** Cada geração vira uma linha em `ai_summaries` — nunca
+substitui a anterior. Um resumo já enviado à família precisa continuar
+existindo para responder "o que eu mandei". A coluna `model` registra quem
+redigiu; quando o modelo mudar, os textos antigos continuam rastreáveis.
+
+```bash
+# resumos gerados, do mais recente
+/Applications/XAMPP/xamppfiles/bin/mysql -h 127.0.0.1 -u root saap_local -e "
+  SELECT s.id, l.name AS aprendiz, s.level, s.model, s.tokens_used, s.generated_at
+  FROM ai_summaries s
+  JOIN assessments a ON a.id = s.assessment_id
+  JOIN learners l ON l.id = a.learner_id
+  ORDER BY s.generated_at DESC LIMIT 10;"
+```
+
+**O modelo é fixado, não `-latest`.** `GEMINI_MODEL=gemini-3.5-flash-lite` no
+`.env`. Um alias que se move sozinho trocaria o redator de um documento
+clínico sem ninguém decidir nada. Trocar de modelo é edição de `.env`, com o
+resumo seguinte já registrando o novo nome na coluna `model`.
+
+**Precisa do worker.** O resumo roda dentro do job do PDF (`queue:work`). Sem
+worker, o modal fica em "Gerando formulário…" — ver "Fila travada" acima.
 
 ## Lançamento retroativo (avaliação em papel)
 

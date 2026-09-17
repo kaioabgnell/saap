@@ -34,14 +34,18 @@ final class RecalculateLevelTotals
 
         $respondidos = (int) $agregado->respondidos;
 
+        $voltouAoAndamento = $respondidos < $nivel->total_count;
+
         $nivel->update([
             'answered_count' => $respondidos,
             'score_total' => (float) $agregado->pontos,
             // Um nível concluído volta a "em andamento" se uma resposta for
             // desfeita. A conclusão da avaliação (F7) é que trava de vez.
-            'status' => $respondidos >= $nivel->total_count
-                ? $nivel->status
-                : LevelStatus::InProgress->value,
+            'status' => $voltouAoAndamento ? LevelStatus::InProgress->value : $nivel->status,
+            // A data de conclusão acompanha o status. Deixá-la para trás faria
+            // o laudo afirmar "concluído em 17/09" sobre um nível que voltou a
+            // estar incompleto — BuildReportPayload lê este campo direto.
+            'completed_at' => $voltouAoAndamento ? null : $nivel->completed_at,
         ]);
     }
 }

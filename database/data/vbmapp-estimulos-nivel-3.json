@@ -1,0 +1,323 @@
+{
+  "_leia_me": "Acervo curado à mão para marcos do nível 3 (Tato 11-14 e Ouvinte 11). Diferente do nível 1, que é recortado do PDF do material por vbmapp:import-material, estas figuras foram escolhidas uma a uma pela psicóloga e vivem em docs/material-aplicacao/nivel3/. Este arquivo é a fonte da verdade dos rótulos: rodar vbmapp:import-stimuli --level=3 recria o acervo a partir dele. Rótulo aparece sob a figura na grade e no detalhamento do laudo — nunca na tela de apresentação, que é a que a criança olha. O campo opcional \"instrucao\" vira vbmapp_items.stimulus_prompt: a frase que o psicólogo lê acima da grade, também escondida da tela de apresentação pelo mesmo motivo.",
+  "level": 3,
+  "marcos": [
+    {
+      "area": "tato",
+      "position": 11,
+      "pasta": "docs/material-aplicacao/nivel3/tato11",
+      "_nota": "Marco em matriz: 5 objetos x (Cor, Forma, Função) = 15 tentativas. Os rótulos abaixo TÊM de ser exatamente as linhas de fixed_list do catálogo — é por eles que a figura acha a própria linha na grade.",
+      "figuras": [
+        {
+          "arquivo": "bola-tenis.png",
+          "rotulo": "bola de tênis"
+        },
+        {
+          "arquivo": "dado.png",
+          "rotulo": "dado"
+        },
+        {
+          "arquivo": "geladeira.png",
+          "rotulo": "geladeira"
+        },
+        {
+          "arquivo": "maca.png",
+          "rotulo": "maçã"
+        },
+        {
+          "arquivo": "pizza.png",
+          "rotulo": "pizza"
+        }
+      ]
+    },
+    {
+      "area": "tato",
+      "position": 12,
+      "pasta": "docs/material-aplicacao/nivel3/tato12",
+      "_nota": "Preposições: o rótulo nomeia a relação espacial, que é justamente o que se espera que a criança emita.",
+      "figuras": [
+        {
+          "arquivo": "bola-caixa.png",
+          "rotulo": "bola atrás da caixa"
+        },
+        {
+          "arquivo": "caixa-bola.png",
+          "rotulo": "bola ao lado da caixa"
+        },
+        {
+          "arquivo": "caixa-frente-bola.png",
+          "rotulo": "bola na frente da caixa"
+        },
+        {
+          "arquivo": "caixas-bola.png",
+          "rotulo": "bola entre as caixas"
+        },
+        {
+          "arquivo": "maca-mesa.png",
+          "rotulo": "maçã sobre a mesa"
+        }
+      ]
+    },
+    {
+      "area": "tato",
+      "position": 13,
+      "pasta": "docs/material-aplicacao/nivel3/tato13",
+      "_nota": "Adjetivos e advérbios. Cada figura já traz a pergunta impressa; o rótulo resume o que se pergunta.",
+      "figuras": [
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.12.18.png",
+          "rotulo": "tamanho das árvores"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.12.25.png",
+          "rotulo": "velocidade do carro"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.12.33.png",
+          "rotulo": "tamanho dos animais"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.12.43.png",
+          "rotulo": "mãos limpa e suja"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.12.55.png",
+          "rotulo": "falar baixinho e alto"
+        }
+      ]
+    },
+    {
+      "area": "tato",
+      "position": 14,
+      "pasta": "docs/material-aplicacao/nivel3/tato14",
+      "_nota": "Sentenças de 4 palavras ou mais, 20 vezes — uma figura por tentativa. As oito primeiras são tiras de pictogramas; as doze seguintes, fotos de ação.",
+      "figuras": [
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.21.png",
+          "rotulo": "o pato na lagoa"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.26.png",
+          "rotulo": "a casa é verde"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.33.png",
+          "rotulo": "a vaca vive na fazenda"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.39.png",
+          "rotulo": "o gato bebe leite"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.47.png",
+          "rotulo": "o carro é vermelho"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.53.png",
+          "rotulo": "a estrela é amarela"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.14.59.png",
+          "rotulo": "o cachorro come osso"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.15.04.png",
+          "rotulo": "o pássaro vive no ninho"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.13.png",
+          "rotulo": "menino comendo macarrão"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.17.png",
+          "rotulo": "menina escovando os dentes"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.21.png",
+          "rotulo": "menino dormindo na cama"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.26.png",
+          "rotulo": "menina nadando na piscina"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.31.png",
+          "rotulo": "criança amarrando o tênis"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.36.png",
+          "rotulo": "mulher correndo na praia"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.43.png",
+          "rotulo": "menina andando de patins"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.48.png",
+          "rotulo": "menina andando a cavalo"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.16.56.png",
+          "rotulo": "menino escrevendo no caderno"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.17.01.png",
+          "rotulo": "homem andando de bicicleta"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.17.06.png",
+          "rotulo": "mulher penteando o cabelo"
+        },
+        {
+          "arquivo": "Captura de Tela 2026-09-09 às 17.17.11.png",
+          "rotulo": "menino cantando no microfone"
+        }
+      ]
+    },
+    {
+      "area": "ouvinte",
+      "position": 11,
+      "pasta": "docs/material-aplicacao/nivel3/ouvinte11",
+      "instrucao": "Solicitar algum desses falando cor ou forma",
+      "_nota": "Marco de seleção por propriedade: o psicólogo pede a figura nomeando a COR (\"o carro vermelho\") ou a FORMA (\"o triângulo\"), e a criança aponta. Por isso o acervo mistura objetos que se repetem em cores diferentes e as seis formas puras — é o contraste entre eles que torna o pedido testável. O rótulo traz a cor só quando é ela que distingue a figura de outra igual.",
+      "figuras": [
+        {
+          "arquivo": "agua-viva.png",
+          "rotulo": "água-viva"
+        },
+        {
+          "arquivo": "arraia.png",
+          "rotulo": "arraia"
+        },
+        {
+          "arquivo": "banana.png",
+          "rotulo": "banana"
+        },
+        {
+          "arquivo": "bermuda.png",
+          "rotulo": "bermuda"
+        },
+        {
+          "arquivo": "blusa-vermelha.png",
+          "rotulo": "blusa vermelha"
+        },
+        {
+          "arquivo": "bone.png",
+          "rotulo": "boné"
+        },
+        {
+          "arquivo": "calca.png",
+          "rotulo": "calça"
+        },
+        {
+          "arquivo": "camiseta.png",
+          "rotulo": "camiseta"
+        },
+        {
+          "arquivo": "carro-amarelo.png",
+          "rotulo": "carro amarelo"
+        },
+        {
+          "arquivo": "carro-azul.png",
+          "rotulo": "carro azul"
+        },
+        {
+          "arquivo": "carro-vermelho.png",
+          "rotulo": "carro vermelho"
+        },
+        {
+          "arquivo": "casaco-azul.png",
+          "rotulo": "casaco azul"
+        },
+        {
+          "arquivo": "cavalo-marinho.png",
+          "rotulo": "cavalo-marinho"
+        },
+        {
+          "arquivo": "cereja.png",
+          "rotulo": "cereja"
+        },
+        {
+          "arquivo": "chocolate.png",
+          "rotulo": "chocolate"
+        },
+        {
+          "arquivo": "circulo.png",
+          "rotulo": "círculo"
+        },
+        {
+          "arquivo": "coracao.png",
+          "rotulo": "coração"
+        },
+        {
+          "arquivo": "estrela.png",
+          "rotulo": "estrela"
+        },
+        {
+          "arquivo": "fruta-laranja.png",
+          "rotulo": "laranja (foto)"
+        },
+        {
+          "arquivo": "fruta-morango.png",
+          "rotulo": "morango (foto)"
+        },
+        {
+          "arquivo": "hezagono.png",
+          "rotulo": "hexágono"
+        },
+        {
+          "arquivo": "kiwi.png",
+          "rotulo": "kiwi"
+        },
+        {
+          "arquivo": "laranja.png",
+          "rotulo": "laranja"
+        },
+        {
+          "arquivo": "limao.png",
+          "rotulo": "limão"
+        },
+        {
+          "arquivo": "morango.png",
+          "rotulo": "morango"
+        },
+        {
+          "arquivo": "moto.png",
+          "rotulo": "moto"
+        },
+        {
+          "arquivo": "ovo-frito.png",
+          "rotulo": "ovo frito"
+        },
+        {
+          "arquivo": "peixe-desenho.png",
+          "rotulo": "peixe (desenho)"
+        },
+        {
+          "arquivo": "peixe.png",
+          "rotulo": "peixe (foto)"
+        },
+        {
+          "arquivo": "quadrado.png",
+          "rotulo": "quadrado"
+        },
+        {
+          "arquivo": "tartatuga.png",
+          "rotulo": "tartaruga"
+        },
+        {
+          "arquivo": "torta.png",
+          "rotulo": "torta"
+        },
+        {
+          "arquivo": "triangulo.png",
+          "rotulo": "triângulo"
+        },
+        {
+          "arquivo": "uva.png",
+          "rotulo": "uva"
+        }
+      ]
+    }
+  ]
+}

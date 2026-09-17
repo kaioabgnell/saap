@@ -7,6 +7,7 @@ use App\Application\Assessment\CompleteLevel;
 use App\Application\Assessment\SaveResponse;
 use App\Application\Assessment\SaveResponseCommand;
 use App\Application\Assessment\StartLevel;
+use App\Application\Report\GenerateAiSummary;
 use App\Domain\Vbmapp\Catalog\CatalogCache;
 use App\Jobs\GenerateReportPdf;
 use App\Livewire\Assessment\LevelBoard;
@@ -147,7 +148,7 @@ it('gera o PDF do relatório completo em menos de 30 s', function () {
     $snapshot = app(CompleteAssessment::class)->handle($assessment->refresh());
 
     $inicio = microtime(true);
-    (new GenerateReportPdf($snapshot->id))->handle();
+    (new GenerateReportPdf($snapshot->id))->handle(app(GenerateAiSummary::class));
     $segundos = microtime(true) - $inicio;
 
     expect($segundos)->toBeLessThan(30.0, sprintf('levou %.1f s', $segundos))

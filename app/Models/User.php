@@ -37,6 +37,7 @@ class User extends Authenticatable
         'clinic_city',
         'clinic_state',
         'clinic_zip',
+        'clinic_logo_path',
     ];
 
     /**
@@ -72,6 +73,11 @@ class User extends Authenticatable
         return $this->hasMany(Assessment::class);
     }
 
+    public function appointments(): HasMany
+    {
+        return $this->hasMany(Appointment::class);
+    }
+
     /** Foto de perfil no disco público — menos sensível que a de aprendiz. */
     public function photoUrl(string $tamanho = 'padrao'): ?string
     {
@@ -84,5 +90,13 @@ class User extends Authenticatable
             : $this->photo_path;
 
         return Storage::disk('public')->url($path);
+    }
+
+    /** Logo da clínica, ou nulo se o psicólogo não subiu nenhuma — ver ClinicLogoUploader. */
+    public function clinicLogoUrl(): ?string
+    {
+        return $this->clinic_logo_path === null
+            ? null
+            : Storage::disk('public')->url($this->clinic_logo_path);
     }
 }

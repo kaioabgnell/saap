@@ -23,6 +23,7 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /.venv-tools
+/docs/material-aplicacao
 
 # Acervo de imagens do VB-MAPP: 25 MB de conteúdo licenciado, derivado dos PDFs
 # em docs/material-aplicacao/. Reproduzível com:

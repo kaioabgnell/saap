@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('aprendizes.index')" :active="request()->routeIs('aprendizes.*')">
                         Aprendizes
                     </x-nav-link>
+                    <x-nav-link :href="route('agenda')" :active="request()->routeIs('agenda') || request()->routeIs('atendimentos.*')">
+                        Agenda
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -80,6 +83,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('aprendizes.index')" :active="request()->routeIs('aprendizes.*')">
                 Aprendizes
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('agenda')" :active="request()->routeIs('agenda') || request()->routeIs('atendimentos.*')">
+                Agenda
             </x-responsive-nav-link>
         </div>
 

@@ -48,7 +48,11 @@
         </p>
     @endif
 
-    @if ($item->response_type !== ResponseType::CounterStimuli && $this->paginasDoMarco->isNotEmpty())
+    {{-- Referência à página inteira do PDF: só quando o marco não tem
+         acervo próprio. Com acervo (Tato 11-14 do nível 3, por exemplo), a
+         figura recortada já está na tela — mostrar a página inteira do PDF
+         ao lado seria repetir a mesma informação pior. --}}
+    @if ($item->response_type !== ResponseType::CounterStimuli && ! $this->temGaleriaPropria() && $this->paginasDoMarco->isNotEmpty())
         <div class="mt-3 flex flex-wrap gap-2">
             @foreach ($this->paginasDoMarco as $pagina)
                 <a href="{{ Storage::disk('public')->url($pagina->image_path) }}" target="_blank" rel="noopener"
@@ -132,7 +136,8 @@
                 @break
 
             @case(ResponseType::CounterStimuli)
-                <x-vbmapp.stimulus-grid :item="$item" :estimulos="$estimulos" :paginas="$this->paginasDoMarco" />
+                <x-vbmapp.stimulus-grid :item="$item" :estimulos="$estimulos"
+                                        :paginas="$this->paginasDoMarco" :imediatas="$imagensImediatas" />
 
                 @if (count($caixas) > 0)
                     <p class="mt-4 mb-2 rounded-md bg-canvas px-3 py-2 text-xs text-ink-muted">
@@ -157,59 +162,10 @@
                 @break
 
             @case(ResponseType::Matrix)
-                @php $linhasMatriz = $this->linhasDaMatriz(); $colunasMatriz = $this->colunasDaMatriz(); @endphp
-
-                {{-- A grade rola dentro do próprio contêiner — a página nunca rola de lado. --}}
-                <div x-data="{ busca: '' }">
-                    @if (count($linhasMatriz) > 20)
-                        <div class="relative mb-3">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xs text-ink-subtle" aria-hidden="true"></i>
-                            <input type="search" x-model="busca" placeholder="Buscar entre {{ count($linhasMatriz) }} itens…"
-                                   class="min-h-[44px] w-full rounded-md border-line pl-8 text-sm focus:border-primary focus:ring-primary">
-                        </div>
-                    @endif
-
-                    <div class="overflow-x-auto rounded-md border border-line">
-                        <table class="w-full min-w-[480px] text-sm">
-                            <thead>
-                                <tr class="border-b border-line bg-canvas">
-                                    <th class="sticky left-0 bg-canvas px-3 py-2 text-left font-medium text-ink-muted">Item</th>
-                                    @foreach ($colunasMatriz as $coluna)
-                                        <th class="px-3 py-2 text-center font-medium text-ink-muted">{{ $coluna }}</th>
-                                    @endforeach
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($linhasMatriz as $linha)
-                                    <tr x-show="!busca || {{ \Illuminate\Support\Js::from(mb_strtolower($linha)) }}.includes(busca.toLowerCase())"
-                                        class="border-b border-line last:border-0 odd:bg-surface even:bg-canvas/40">
-                                        <td class="sticky left-0 bg-inherit px-3 py-2 text-ink">{{ $linha }}</td>
-                                        @foreach ($colunasMatriz as $coluna)
-                                            @php $chave = $linha.'::'.$coluna; @endphp
-                                            <td class="px-3 py-2 text-center">
-                                                <input type="checkbox"
-                                                       wire:model.live="matrizMarcadas.{{ $chave }}"
-                                                       aria-label="{{ $linha }}, {{ $coluna }}"
-                                                       class="h-5 w-5 rounded border-line text-success-ink focus:ring-success">
-                                            </td>
-                                        @endforeach
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div class="mt-3 flex items-center gap-2">
-                    <input type="text" wire:model="novaLinhaMatrix" wire:keydown.enter="acrescentarLinhaMatriz"
-                           placeholder="Acrescentar item à grade"
-                           aria-label="Acrescentar item à grade"
-                           class="min-h-[44px] flex-1 rounded-md border-line text-sm focus:border-primary focus:ring-primary">
-                    <button type="button" wire:click="acrescentarLinhaMatriz"
-                            class="min-h-[44px] rounded-md border border-line px-3 text-sm font-medium text-ink hover:bg-canvas">
-                        Adicionar
-                    </button>
-                </div>
+                <x-vbmapp.stimulus-matrix :item="$item"
+                                          :linhas="$this->linhasDaMatriz()"
+                                          :colunas="$this->colunasDaMatriz()"
+                                          :imediatas="$imagensImediatas" />
                 @break
 
             @default

@@ -48,9 +48,19 @@
             {{-- Identificação --}}
             <div class="rounded-lg border border-line bg-surface p-6 shadow-sm">
                 <div class="flex flex-wrap items-start justify-between gap-4">
-                    <div>
-                        <p class="text-lg font-semibold text-ink">{{ $d['aprendiz']['nome'] }}</p>
-                        <p class="text-sm text-ink-muted">{{ $d['aprendiz']['idade_na_aplicacao'] }} na data da aplicação</p>
+                    <div class="flex items-center gap-4">
+                        {{-- Mesma logo do cabeçalho do PDF — clínica própria, ou
+                             a do sistema quando não há nenhuma. Só existe em
+                             laudo gerado a partir desta versão; um laudo mais
+                             antigo simplesmente não tem essa linha. --}}
+                        @if (! empty($d['aplicador']['clinica']['logo']))
+                            <img src="{{ $d['aplicador']['clinica']['logo'] }}" alt=""
+                                 class="h-9 max-w-[9rem] flex-none object-contain">
+                        @endif
+                        <div>
+                            <p class="text-lg font-semibold text-ink">{{ $d['aprendiz']['nome'] }}</p>
+                            <p class="text-sm text-ink-muted">{{ $d['aprendiz']['idade_na_aplicacao'] }} na data da aplicação</p>
+                        </div>
                     </div>
                     @if (($d['aplicacao']['modo'] ?? 'aplicacao') === 'transcricao')
                         <span class="rounded-full bg-warning-soft px-3 py-1 text-xs font-semibold text-warning-ink">
@@ -77,6 +87,47 @@
                     @endforeach
                 </dl>
             </div>
+
+            {{-- Resumo redigido por IA.
+
+                 Fica FORA do snapshot congelado: o `content_hash` existe para
+                 detectar adulteração do laudo, e escrever texto novo lá dentro
+                 exigiria recalcular o hash — justamente o que ele impede. É
+                 outro documento, com outra autoria e outra data, mostrado ao
+                 lado e identificado como tal. --}}
+            @if ($resumoIa ?? null)
+                <div class="rounded-lg border border-line bg-surface p-6 shadow-sm">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <h3 class="text-base font-semibold text-ink">Resumo da avaliação</h3>
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-warning-soft px-2.5 py-1 text-xs font-medium text-warning-ink">
+                            <i class="fa-solid fa-robot" aria-hidden="true"></i>
+                            Gerado por IA
+                        </span>
+                    </div>
+
+                    {{-- O aviso vem ANTES do texto: quem lê precisa saber quem
+                         escreveu antes de começar a ler. --}}
+                    <p class="mt-3 rounded-md border border-warning/30 bg-warning-soft px-4 py-3 text-sm leading-relaxed text-warning-ink">
+                        <strong>Texto gerado por inteligência artificial</strong> a partir das pontuações
+                        registradas. Não substitui a avaliação, o parecer nem o laudo do profissional
+                        responsável — revise antes de entregar aos responsáveis.
+                    </p>
+
+                    <div class="mt-4 space-y-2">
+                        @foreach ($resumoIa->paragrafos() as $paragrafo)
+                            @if ($paragrafo['titulo'])
+                                <h4 class="pt-2 text-sm font-semibold text-ink">{{ $paragrafo['texto'] }}</h4>
+                            @else
+                                <p class="text-sm leading-relaxed text-ink-muted">{{ $paragrafo['texto'] }}</p>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    <p class="mt-4 border-t border-line pt-3 text-xs text-ink-subtle">
+                        Gerado em {{ $resumoIa->generated_at->format('d/m/Y \à\s H:i') }} · modelo {{ $resumoIa->model }}
+                    </p>
+                </div>
+            @endif
 
             {{-- Resumo --}}
             <div class="rounded-lg border border-line bg-surface p-6 shadow-sm">

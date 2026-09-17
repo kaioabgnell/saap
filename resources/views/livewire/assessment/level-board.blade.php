@@ -107,6 +107,7 @@
                     :assessment="$avaliacao"
                     :item="$item"
                     :response="$this->respostasVisiveis->get($item->id)"
+                    :imagens-imediatas="$areaCode !== null"
                     :wire:key="'marco-'.$item->id" />
             @empty
                 <div class="rounded-lg border border-dashed border-line bg-surface p-10 text-center">
@@ -146,7 +147,7 @@
                     <span class="text-ink-muted">Salvando…</span>
                 </span>
                 <span wire:loading.remove wire:target="salvar, confirmar" x-data="filaSalvamento">
-                    <template x-if="pendentes === 0">
+                    <template x-if="pendentes === 0 && travados === 0">
                         <span class="flex items-center gap-1.5">
                             <i class="fa-solid fa-check text-success-ink" aria-hidden="true"></i>
                             <span class="text-ink-muted">
@@ -154,12 +155,32 @@
                             </span>
                         </span>
                     </template>
+                    {{-- Retentativa em andamento: ainda pode se resolver sozinha. --}}
                     <template x-if="pendentes > 0">
-                        <span class="flex items-center gap-1.5">
+                        <span class="flex items-center gap-1.5" aria-live="polite">
                             <i class="fa-solid fa-triangle-exclamation text-warning-ink" aria-hidden="true"></i>
                             <span class="text-warning-ink">
-                                Sem conexão — <span x-text="pendentes"></span> <span x-text="pendentes === 1 ? 'alteração' : 'alterações'"></span> na fila
+                                Sem conexão — tentando salvar de novo
+                                (<span x-text="pendentes"></span> <span x-text="pendentes === 1 ? 'alteração' : 'alterações'"></span>)
                             </span>
+                        </span>
+                    </template>
+                    {{-- Esgotou as tentativas sozinha: reenviar não vai resolver — a
+                         causa mais provável é a sessão ter vencido, e o mesmo login
+                         expirado volta a falhar sempre. Só recarregar resolve, e é
+                         a única ação que não passa por fila nem banco. --}}
+                    <template x-if="travados > 0">
+                        <span class="flex items-center gap-2" role="alert">
+                            <i class="fa-solid fa-circle-exclamation text-danger" aria-hidden="true"></i>
+                            <span class="text-danger">
+                                Não foi possível salvar
+                                (<span x-text="travados"></span> <span x-text="travados === 1 ? 'alteração' : 'alterações'"></span>).
+                                Recarregue a página.
+                            </span>
+                            <button type="button" @click="recarregar"
+                                    class="inline-flex min-h-[44px] items-center rounded-md border border-danger/30 bg-danger-soft px-3 text-sm font-medium text-danger hover:bg-danger/10">
+                                Recarregar
+                            </button>
                         </span>
                     </template>
                 </span>

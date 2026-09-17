@@ -110,3 +110,35 @@ it('permite excluir aprendiz sem avaliação concluída', function () {
     $response->assertRedirect(route('aprendizes.index'));
     expect(Learner::find($learner->id))->toBeNull();
 });
+
+/**
+ * A confirmação de exclusão é um modal da própria tela, não o confirm()
+ * nativo do navegador — sem foco preso, sem estilo do sistema operacional.
+ */
+it('confirma a exclusão por um modal, não pelo confirm() do navegador', function () {
+    $psicologo = User::factory()->create();
+    $learner = Learner::factory()->for($psicologo)->create(['name' => 'Kaleo']);
+
+    $html = $this->actingAs($psicologo)
+        ->get(route('aprendizes.show', $learner))
+        ->assertOk()
+        ->assertDontSeeText('return confirm(')
+        ->assertSee('Excluir Kaleo?')
+        ->assertSee('Esta ação não pode ser desfeita por aqui.')
+        ->getContent();
+
+    expect($html)->not->toContain('onsubmit="return confirm(');
+});
+
+it('o modal avisa por que não dá para excluir quando há avaliação concluída', function () {
+    $psicologo = User::factory()->create();
+    $learner = Learner::factory()->for($psicologo)->create(['name' => 'Kaleo']);
+    Assessment::factory()->completed()->for($learner)->for($psicologo)->create();
+
+    $this->actingAs($psicologo)
+        ->get(route('aprendizes.show', $learner))
+        ->assertOk()
+        ->assertSee('Não é possível excluir Kaleo')
+        ->assertSee('avaliação concluída')
+        ->assertDontSee('Excluir aprendiz');
+});

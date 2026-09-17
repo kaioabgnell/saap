@@ -7,10 +7,13 @@ use App\Http\Controllers\LearnerPhotoController;
 use App\Http\Controllers\PainelController;
 use App\Http\Controllers\PrintFormController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProntuarioController;
 use App\Http\Controllers\ReportController;
 use App\Livewire\Admin\StimulusCuration;
+use App\Livewire\Agenda\Schedule;
 use App\Livewire\Assessment\ChartEntry;
 use App\Livewire\Assessment\LevelBoard;
+use App\Livewire\Atendimento\SessionBoard;
 use Illuminate\Support\Facades\Route;
 
 // A primeira tela do sistema é o login. Visitante não autenticado cai aqui;
@@ -27,6 +30,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/aprendizes/{learner}/foto/{tamanho}', [LearnerPhotoController::class, 'show'])
         ->name('aprendizes.foto')
         ->middleware('signed');
+    Route::get('/aprendizes/{learner}/prontuario', [ProntuarioController::class, 'show'])
+        ->name('aprendizes.prontuario');
+
+    // Agenda e atendimentos — ver .claude/specs/fases/F11-agenda-e-atendimentos.md.
+    Route::get('/agenda', Schedule::class)->name('agenda');
+    Route::get('/atendimentos/{appointment}', SessionBoard::class)->name('atendimentos.show');
 
     // Curadoria do acervo — trabalho de manutenção do catálogo, feito uma vez.
     Route::get('/admin/estimulos', StimulusCuration::class)->name('admin.estimulos');
